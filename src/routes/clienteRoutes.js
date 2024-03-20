@@ -1,29 +1,29 @@
 // clienteRoutes.js
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const clienteController = require('../controllers/clienteController');
-const authMiddleware = require('../middlewares/authMiddleware');
-const checkRolePermissions = require('../middlewares/checkRolePermissions');
+import {getAllClientesWithConnectionStatus, getAllClientes, createCliente, getClienteById, updateCliente, deleteCliente} from '../controllers/clienteController.js';
+import authMiddleware from '../middlewares/authMiddleware.js';
+import checkRolePermissions from '../middlewares/checkRolePermissions.js';
 
 
 // Ruta para obtener todos los clientes con estado de conexión
-router.get('/with-connection-status', authMiddleware, checkRolePermissions([1]), clienteController.getAllClientesWithConnectionStatus);
+router.get('/with-connection-status', authMiddleware, checkRolePermissions([1]), getAllClientesWithConnectionStatus);
 
 // Ruta para obtener todos los clientes
-router.get('/', authMiddleware, checkRolePermissions([1, 2]), clienteController.getAllClientes);
+router.get('/', authMiddleware, checkRolePermissions([1, 2]), getAllClientes);
 
 // Ruta para crear un nuevo cliente
-router.post('/', authMiddleware, checkRolePermissions([1]), clienteController.createCliente);
+router.post('/', authMiddleware, checkRolePermissions([1]), createCliente);
 
 // Ruta para obtener un cliente por su ID
-router.get('/:id', authMiddleware, checkRolePermissions([1, 2]), clienteController.getClienteById);
+router.get('/:id', authMiddleware, checkRolePermissions([1, 2]), getClienteById);
 
 // Ruta para actualizar un cliente por su ID
-router.put('/:id', authMiddleware, checkRolePermissions([1]), clienteController.updateCliente);
+router.put('/:id', authMiddleware, checkRolePermissions([1]), updateCliente);
 
 // Ruta para eliminar un cliente por su ID
-router.delete('/:id', authMiddleware, checkRolePermissions([1]), clienteController.deleteCliente);
+router.delete('/:id', authMiddleware, checkRolePermissions([1]), deleteCliente);
 
 
-module.exports = router;
+export default router;

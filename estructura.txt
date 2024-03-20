@@ -20,7 +20,7 @@ project-root/
 │   ├── auditUtils.js
 │   ├── dbUtils.js
 │   ├── emailController.js
-│   ├── responseUtils.js
+│   ├── js
 │   └── tokenUtils.js
 │
 ├── .env

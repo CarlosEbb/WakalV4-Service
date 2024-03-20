@@ -1,15 +1,15 @@
 //index.js
-const express = require('express');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const csrf = require('csurf'); // Importa csurf para la protección CSRF
+import express from 'express';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import csrf from 'csurf'; // Importa csurf para la protección CSRF
 
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const clienteRoutes = require('./routes/clienteRoutes');
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import clienteRoutes from './routes/clienteRoutes.js';
 
-const executeQuery = require('./utils/dbUtils');
-const responseUtils = require('./utils/responseUtils');
+import {createJSONResponse} from './utils/responseUtils.js';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -34,12 +34,14 @@ app.use('/auth', authRoutes);
 // Rutas de usuarios
 app.use('/usuarios', userRoutes);
 
+// Rutas de clientes
+app.use('/clientes', clienteRoutes);
 
 // Middleware para manejo de errores
 app.use((err, req, res, next) => {
     console.error('Error no controlado:', err.message);
     // Ejemplo de respuesta de error genérica
-    const jsonResponse = responseUtils.createJSONResponse(500, 'Error no controlado: '+ err.message, {});
+    const jsonResponse = createJSONResponse(500, 'Error no controlado: '+ err.message, {});
     res.status(500).json(jsonResponse);
 });
 

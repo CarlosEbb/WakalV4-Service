@@ -1,8 +1,8 @@
 // blacklistedToken.js (modelo de token en lista negra)
 
-const { executeQuery } = require('../utils/dbUtils');
+import { executeQuery } from '../utils/dbUtils.js';
 
-class BlacklistedToken {
+export default class BlacklistedToken {
     constructor(data) {
         this.user_id = data.user_id;
         this.token = data.token;
@@ -32,5 +32,3 @@ class BlacklistedToken {
         }
     }
 }
-
-module.exports = BlacklistedToken;

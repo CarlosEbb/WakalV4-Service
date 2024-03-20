@@ -1,9 +1,9 @@
 // user.js (modelo de usuario)
 
-const { executeQuery } = require('../utils/dbUtils');
-const bcrypt = require('bcrypt');
+import { executeQuery } from '../utils/dbUtils.js';
+import bcrypt from 'bcrypt';
 
-class User {
+export default class User {
     #password; // Propiedad privada
 
     constructor(data) {
@@ -144,5 +144,3 @@ class User {
     }
 
 }
-
-module.exports = User;

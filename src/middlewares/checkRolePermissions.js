@@ -1,6 +1,6 @@
 //checkRolePermissions.js
 // Middleware para verificar el rol del usuario
-function checkRolePermissions(allowedRoles) {
+export default function checkRolePermissions(allowedRoles) {
     return function(req, res, next) {
         // Verificar el rol del usuario extraído del token JWT
         const userRole = req.user.rolId; // Suponiendo que el rol del usuario está almacenado en req.user.rolId
@@ -14,5 +14,3 @@ function checkRolePermissions(allowedRoles) {
         }
     };
 }
-
-module.exports = checkRolePermissions;

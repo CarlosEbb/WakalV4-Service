@@ -1,8 +1,8 @@
 //emailController.js
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 // Esta función envía un correo electrónico con el contenido proporcionado
-async function sendEmail(to, subject, text) {
+export async function sendEmail(to, subject, text) {
     try {
         // Configurar el transporte de correo
         const transporter = nodemailer.createTransport({
@@ -32,5 +32,3 @@ async function sendEmail(to, subject, text) {
         throw error;
     }
 }
-
-module.exports = { sendEmail };

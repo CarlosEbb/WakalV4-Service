@@ -1,18 +1,18 @@
 //authRoutes.js
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authController = require('../controllers/authController');
+import {login, logout, resetPasswordRequest, changePassword} from '../controllers/authController.js';
 
 // Ruta para iniciar sesión
-router.post('/login', authController.login);
+router.post('/login', login);
 
 // Ruta para cerrar sesión
-router.post('/logout', authController.logout);
+router.post('/logout', logout);
 
 // Ruta para solicitar recuperación de contraseña
-router.post('/reset-password-request', authController.resetPasswordRequest);
+router.post('/reset-password-request', resetPasswordRequest);
 
 // Ruta para cambiar la contraseña
-router.post('/change-password', authController.changePassword);
+router.post('/change-password', changePassword);
 
-module.exports = router;
+export default router;

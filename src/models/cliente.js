@@ -1,8 +1,8 @@
 // cliente.js (modelo de cliente)
 
-import { executeQuery, validateConnection } from "../utils/dbUtils"
+import { executeQuery, validateConnection } from "../utils/dbUtils.js";
 
-class Cliente {
+export default class Cliente {
     constructor(data) {
         this.id = data.id;
         this.rif = data.rif;
@@ -130,5 +130,3 @@ class Cliente {
         }
     }
 }
-
-module.exports = Cliente;

@@ -1,7 +1,7 @@
 //dbUtils.js
-const odbc = require('odbc');
+import odbc from 'odbc';
 
-async function executeQuery(DSN, query, params) {
+export async function executeQuery(DSN, query, params) {
   let connection;
   try {
     // Establece la conexión utilizando el DSN proporcionado
@@ -29,7 +29,7 @@ async function executeQuery(DSN, query, params) {
 }
 
 
-async function validateConnection(DSN) {
+export async function validateConnection(DSN) {
   let connection;
   try {
       // Verificar si el DSN no es null
@@ -57,9 +57,3 @@ async function validateConnection(DSN) {
   }
 }
   
-
-
-module.exports = {
-  executeQuery,
-  validateConnection
-};

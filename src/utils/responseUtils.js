@@ -6,12 +6,3 @@ export const createJSONResponse = (code, message, data) => {
         data: data
     };
 };
-
-
-export const hola = (code, message, data) => {
-    return {
-        code: code,
-        message: message,
-        data: data
-    };
-};

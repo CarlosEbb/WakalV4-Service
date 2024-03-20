@@ -1,7 +1,7 @@
 //auditUtils.js
-const { executeQuery } = require('./dbUtils');
+import { executeQuery } from './dbUtils.js';
 
-async function insertAuditoria(usuarioId, operacion, tablaAfectada, oldValues, newValues, ipCliente) {
+export async function insertAuditoria(usuarioId, operacion, tablaAfectada, oldValues, newValues, ipCliente) {
     try {
         const query = `
             INSERT INTO auditorias (usuario_id, operacion, tabla_afectada, old_values, new_values, ip_cliente)
@@ -15,5 +15,3 @@ async function insertAuditoria(usuarioId, operacion, tablaAfectada, oldValues, n
         throw error;
     }
 }
-
-module.exports = { insertAuditoria };

@@ -1,22 +1,23 @@
 //authController.js
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import nodemailer from 'nodemailer';
 
-const User = require('../models/user');
+import User from '../models/user.js';
 
-const tokenUtils = require('../utils/tokenUtils');
-const responseUtils = require('../utils/responseUtils');
-const { insertAuditoria } = require('../utils/auditUtils');
-const { sendEmail } = require('../utils/emailController');
+import {generateResetToken, isTokenInvalid, addToInvalidTokens} from '../utils/tokenUtils.js';
+import {createJSONResponse} from '../utils/responseUtils.js';
+import { insertAuditoria } from '../utils/auditUtils.js';
+import { sendEmail } from '../utils/emailController.js';
 
 
-require('dotenv').config();
+//import * as dotenv from 'dotenv' dotenv.config();
+//require('dotenv').config();
 
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
     try {
         if (!req.body || !req.body.email || !req.body.password) {
-            const jsonResponse = responseUtils.createJSONResponse(400, 'Solicitud incorrecta: El cuerpo de la solicitud debe contener email y password', {});
+            const jsonResponse = createJSONResponse(400, 'Solicitud incorrecta: El cuerpo de la solicitud debe contener email y password', {});
             return res.status(400).json(jsonResponse);
         }
 
@@ -34,46 +35,41 @@ exports.login = async (req, res) => {
                 const token = jwt.sign({ userId: user.id, rolId: user.rol_id }, 'secretKey', { expiresIn: '1h' });
 
                 // Devolver el token y los datos del usuario en la respuesta dentro del campo data
-                const jsonResponse = responseUtils.createJSONResponse(200, 'Inicio de sesión exitoso', {
+                const jsonResponse = createJSONResponse(200, 'Inicio de sesión exitoso', {
                     token,
                     ...user
                 });
                 return res.status(200).json(jsonResponse);
             } else {
-                const jsonResponse = responseUtils.createJSONResponse(401, 'Credenciales inválidas: Tiempo de acceso expirado', {});
+                const jsonResponse = createJSONResponse(401, 'Credenciales inválidas: Tiempo de acceso expirado', {});
                 return res.status(401).json(jsonResponse);
             }
         }
 
         // Si el usuario no existe o la contraseña no coincide, devolver un error de autenticación
-        const jsonResponse = responseUtils.createJSONResponse(401, 'Credenciales inválidas', {});
+        const jsonResponse = createJSONResponse(401, 'Credenciales inválidas', {});
         res.status(401).json(jsonResponse);
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
-        const jsonResponse = responseUtils.createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
         res.status(500).json(jsonResponse);
     }
 };
 
 
 
-exports.logout = async (req, res) => {
+export const logout = async (req, res) => {
     try {
-        const jsonResponse = responseUtils.createJSONResponse(200, 'logout exitoso', {});
+        const jsonResponse = createJSONResponse(200, 'logout exitoso', {});
         res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al cerrar sesión:', error);
-        const jsonResponse = responseUtils.createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
         res.status(500).json(jsonResponse);
     }
 };
 
-// Esta función genera un token de restablecimiento de contraseña
-function generateResetToken(userId) {
-    return jwt.sign({ userId }, 'resetSecret', { expiresIn: '1h' });
-}
-
-exports.resetPasswordRequest = async (req, res) => {
+export const resetPasswordRequest = async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -82,16 +78,16 @@ exports.resetPasswordRequest = async (req, res) => {
 
         if (user) {
             // Generar un token de restablecimiento de contraseña
-            const resetToken = await tokenUtils.generateResetToken(user.id);
+            const resetToken = await generateResetToken(user.id);
 
             // Envía el correo electrónico de recuperación de contraseña
             const textEmail = `Para restablecer tu contraseña, haz clic en el siguiente enlace: http://tuapp.com/reset-password?token=${resetToken}`;
             await sendEmail(email, 'Recuperación de contraseña', textEmail);
 
-            const jsonResponse = responseUtils.createJSONResponse(200, 'Correo electrónico de recuperación de contraseña enviado correctamente', {});
+            const jsonResponse = createJSONResponse(200, 'Correo electrónico de recuperación de contraseña enviado correctamente', {});
             res.status(200).json(jsonResponse);
         } else {
-            const jsonResponse = responseUtils.createJSONResponse(404, 'El usuario no existe', {});
+            const jsonResponse = createJSONResponse(404, 'El usuario no existe', {});
             res.status(404).json(jsonResponse);
         }
     } catch (error) {
@@ -100,16 +96,16 @@ exports.resetPasswordRequest = async (req, res) => {
     }
 };
 
-exports.changePassword = async (req, res) => {
+export const changePassword = async (req, res) => {
     try {
         const { token, newPassword } = req.body;
 
         // Verificar si el token está en la lista de tokens inválidos
-        const isTokenInvalid = await tokenUtils.isTokenInvalid(token);
+        const TokenInvalid = await isTokenInvalid(token);
         
-        if (isTokenInvalid) {
+        if (TokenInvalid) {
             // Si el token está en la lista de tokens inválidos, devolver un error
-            const jsonResponse = responseUtils.createJSONResponse(400, 'Token inválido o ya utilizado', {});
+            const jsonResponse = createJSONResponse(400, 'Token inválido o ya utilizado', {});
             return res.status(400).json(jsonResponse);
         }
 
@@ -117,7 +113,7 @@ exports.changePassword = async (req, res) => {
         jwt.verify(token, 'resetSecret', async (err, decoded) => {
             if (err) {
                 // Si el token no es válido, devolver un error de token inválido
-                const jsonResponse = responseUtils.createJSONResponse(400, 'Token inválido', {});
+                const jsonResponse = createJSONResponse(400, 'Token inválido', {});
                 return res.status(400).json(jsonResponse);
             }
 
@@ -128,7 +124,7 @@ exports.changePassword = async (req, res) => {
             const user = await User.findById(userId);
             if (!user) {
                 // Si el usuario no existe, devolver un error
-                const jsonResponse = responseUtils.createJSONResponse(404, 'Usuario no encontrado', {});
+                const jsonResponse = createJSONResponse(404, 'Usuario no encontrado', {});
                 return res.status(404).json(jsonResponse);
             }
 
@@ -136,7 +132,7 @@ exports.changePassword = async (req, res) => {
             const isSamePassword = await user.comparePassword(newPassword);
             if (isSamePassword) {
                 // Si la nueva contraseña es igual a la anterior, devolver un error
-                const jsonResponse = responseUtils.createJSONResponse(400, 'La nueva contraseña no puede ser igual a la anterior', {});
+                const jsonResponse = createJSONResponse(400, 'La nueva contraseña no puede ser igual a la anterior', {});
                 return res.status(400).json(jsonResponse);
             }
 
@@ -144,16 +140,16 @@ exports.changePassword = async (req, res) => {
             await User.updatePassword(user.id,newPassword);
 
             // Marcar el token actual como inválido agregándolo a la lista de tokens inválidos
-            await tokenUtils.addToInvalidTokens(user.id, token, 'Cambio de contraseña');
+            await addToInvalidTokens(user.id, token, 'Cambio de contraseña');
 
             // Devolver una respuesta de éxito
-            const jsonResponse = responseUtils.createJSONResponse(200, 'Contraseña actualizada correctamente', {});
+            const jsonResponse = createJSONResponse(200, 'Contraseña actualizada correctamente', {});
             res.status(200).json(jsonResponse);
         });
     } catch (error) {
         console.error('Error al cambiar la contraseña:', error);
-        // Ejemplo de respuesta de error utilizando responseUtils.createJSONResponse
-        const jsonResponse = responseUtils.createJSONResponse(500, 'Error interno del servidor', {});
+        // Ejemplo de respuesta de error utilizando createJSONResponse
+        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
         res.status(500).json(jsonResponse);
     }
 };
