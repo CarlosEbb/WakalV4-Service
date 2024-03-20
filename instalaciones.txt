@@ -1,0 +1,11 @@
+npm install odbc
+npm install sqlanywhere
+
+npm install jsonwebtoken
+npm install bcrypt
+
+npm install csurf
+npm install cookie-parser
+
+npm install dotenv
+npm install nodemailer

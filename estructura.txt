@@ -1,0 +1,28 @@
+project-root/
+│
+├── controllers/
+│   ├── authController.js
+│   └── userController.js
+│
+├── middlewares/
+│   ├── authMiddleware.js
+│   └── checkRolePermissions.js
+│
+├── models/
+│   ├── user.js
+│   └── blacklistedToken.js
+│
+├── routes/
+│   ├── authRoutes.js
+│   └── userRoutes.js
+│
+├── utils/
+│   ├── auditUtils.js
+│   ├── dbUtils.js
+│   ├── emailController.js
+│   ├── responseUtils.js
+│   └── tokenUtils.js
+│
+├── .env
+├── index.js
+└── package.json
