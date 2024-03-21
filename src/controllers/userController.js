@@ -63,11 +63,20 @@ export const createUsuario = async (req, res) => {
         const { email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration } = req.body;
         const registered_by_user_id = req.user.id; // Obtener el ID del usuario que inició sesión desde el token
 
-        // Verificar si el correo electrónico ya está registrado
-        const emailExists = await User.emailExists(email);
-        if (emailExists) {
-            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', {errors: ['El correo electrónico ya está registrado']});
-            return res.status(400).json(jsonResponse);
+        // Verificar si el correo electrónico ya está registrado y si el usuario está eliminado lógicamente
+        const existingUser = await User.emailExists(email);
+
+        if (existingUser.exists) {
+            if (existingUser.deleted) {
+                // Actualizar el usuario existente con los nuevos datos
+                const enabled = 1;
+                await User.updateFields(existingUser.userId, { email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, enabled });
+                const jsonResponse = createJSONResponse(200, 'Usuario creado correctamente', { userId: existingUser.id });
+                return res.status(200).json(jsonResponse);
+            } else {
+                const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El correo electrónico ya está registrado'] });
+                return res.status(400).json(jsonResponse);
+            }
         }
 
         // Si el correo electrónico no está registrado, proceder con la creación del usuario
@@ -81,6 +90,7 @@ export const createUsuario = async (req, res) => {
         return res.status(500).json(jsonResponse);
     }
 };
+
 
 // Definir el esquema de validación con Joi
 const updateUserSchema = Joi.object({
@@ -108,6 +118,20 @@ export const updateUser = async (req, res) => {
             return res.status(400).json(jsonResponse);
         }
 
+        // Verificar si el correo electrónico está siendo actualizado y si es así, si pertenece al usuario que se está actualizando
+        if (fieldsToUpdate.hasOwnProperty('email')) {
+            const userEmail = fieldsToUpdate.email;
+            const existingUser = await User.findByEmail(userEmail);
+            if (existingUser) {
+                if (existingUser.id != userId) {
+                    // El correo electrónico pertenece a otro usuario, no se puede actualizar
+                    const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El correo electrónico ya está en uso por otro usuario'] });
+                    return res.status(400).json(jsonResponse);
+                }
+            }
+        }
+
+        // Si pasa todas las validaciones, actualizar el usuario
         await User.updateFields(userId, fieldsToUpdate);
         const jsonResponse = createJSONResponse(200, 'Usuario actualizado correctamente', {});
         return res.status(200).json(jsonResponse);

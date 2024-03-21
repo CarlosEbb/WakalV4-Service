@@ -13,6 +13,30 @@ export default class Cliente {
         this.updated_at = data.updated_at || null;
     }
 
+    // Método estático para verificar si el RIF existe y si el cliente asociado está marcado como eliminado lógicamente
+    static async rifExists(rif) {
+        try {
+            const query = `
+                SELECT id, enabled
+                FROM clientes
+                WHERE rif = ?;
+            `;
+            const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [rif]);
+            if (result && result.length > 0) {
+                const client = result[0];
+                if (client.enabled == 1) {
+                    return { exists: true, deleted: false, clientId: client.id }; // Si el cliente está habilitado, devolver el ID del cliente
+                } else {
+                    return { exists: true, deleted: true, clientId: client.id }; // Si el cliente está marcado como eliminado, devolver un objeto indicando que existe pero está eliminado, junto con el ID del cliente
+                }
+            }
+            return { exists: false }; // Si no se encuentra ningún registro, devolver un objeto indicando que no existe
+        } catch (error) {
+            console.error('Error al verificar si el RIF existe:', error);
+            throw error;
+        }
+    }
+
     // Método para crear un nuevo cliente
     static async create(data) {
         try {
@@ -34,10 +58,10 @@ export default class Cliente {
         }
     }
 
-    // Método para obtener todos los clientes
+    // Método para obtener todos los clientes que no han sido eliminados lógicamente
     static async getAll() {
         try {
-            const query = 'SELECT * FROM clientes';
+            const query = 'SELECT * FROM clientes WHERE enabled = 1';
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
             return result;
         } catch (error) {
@@ -84,10 +108,10 @@ export default class Cliente {
         }
     }
 
-    // Método para obtener un cliente por su ID
+    // Método para obtener un cliente por su ID que no haya sido eliminado lógicamente
     static async findById(clienteId) {
         try {
-            const query = 'SELECT * FROM clientes WHERE id = ?';
+            const query = 'SELECT * FROM clientes WHERE id = ? AND enabled = 1';
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [clienteId]);
             if (result && result.length > 0) {
                 return new Cliente(result[0]);
@@ -118,14 +142,14 @@ export default class Cliente {
         }
     }
 
-    // Método para eliminar un cliente por su ID
+    // Método estático para eliminar lógicamente un cliente por su ID
     static async delete(clienteId) {
         try {
-            const deleteQuery = 'DELETE FROM clientes WHERE id = ?';
-            await executeQuery(process.env.DB_CONNECTION_ODBC, deleteQuery, [clienteId]);
+            const updateQuery = 'UPDATE clientes SET enabled = 0 WHERE id = ?';
+            await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, [clienteId]);
             console.log('Cliente eliminado correctamente');
         } catch (error) {
-            console.error('Error al eliminar el cliente:', error);
+            console.error('Error al eliminar lógicamente el cliente:', error);
             throw error;
         }
     }

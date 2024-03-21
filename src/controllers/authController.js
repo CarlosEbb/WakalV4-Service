@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer';
 
 import User from '../models/user.js';
 
-import {generateResetToken, isTokenInvalid, addToInvalidTokens} from '../utils/tokenUtils.js';
+import {generateResetToken, generateAuthToken, isTokenInvalid, addToInvalidTokens} from '../utils/tokenUtils.js';
 import {createJSONResponse} from '../utils/responseUtils.js';
 import { insertAuditoria } from '../utils/auditUtils.js';
 import { sendEmail } from '../utils/emailController.js';
@@ -32,8 +32,7 @@ export const login = async (req, res) => {
             if (!user.access_expiration || new Date(user.access_expiration) > new Date()) {
                 // Generar un token JWT
                 
-                const token = jwt.sign({ id: user.id, rol_id: user.rol_id }, 'secretKey', { expiresIn: '1h' });
-
+                const token = await generateAuthToken(user);
                 // Devolver el token y los datos del usuario en la respuesta dentro del campo data
                 const jsonResponse = createJSONResponse(200, 'Inicio de sesión exitoso', {
                     token,
@@ -41,13 +40,13 @@ export const login = async (req, res) => {
                 });
                 return res.status(200).json(jsonResponse);
             } else {
-                const jsonResponse = createJSONResponse(401, 'Credenciales inválidas: Tiempo de acceso expirado', {});
+                const jsonResponse = createJSONResponse(401, 'Datos de entrada no válidos', { errors: ['Credenciales inválidas: Tiempo de acceso expirado'] });
                 return res.status(401).json(jsonResponse);
             }
         }
 
         // Si el usuario no existe o la contraseña no coincide, devolver un error de autenticación
-        const jsonResponse = createJSONResponse(401, 'Credenciales inválidas', {});
+        const jsonResponse = createJSONResponse(401, 'Datos de entrada no válidos', { errors: ['Credenciales inválidas'] });
         res.status(401).json(jsonResponse);
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
@@ -87,7 +86,7 @@ export const resetPasswordRequest = async (req, res) => {
             const jsonResponse = createJSONResponse(200, 'Correo electrónico de recuperación de contraseña enviado correctamente', {});
             res.status(200).json(jsonResponse);
         } else {
-            const jsonResponse = createJSONResponse(404, 'El usuario no existe', {});
+            const jsonResponse = createJSONResponse(404, 'Datos de entrada no válidos', { errors: ['El correo electrónico no coincide con nuestros registros'] });
             res.status(404).json(jsonResponse);
         }
     } catch (error) {
@@ -105,7 +104,7 @@ export const changePassword = async (req, res) => {
         
         if (TokenInvalid) {
             // Si el token está en la lista de tokens inválidos, devolver un error
-            const jsonResponse = createJSONResponse(400, 'Token inválido o ya utilizado', {});
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['Token inválido o ya utilizado'] });
             return res.status(400).json(jsonResponse);
         }
 
@@ -113,7 +112,7 @@ export const changePassword = async (req, res) => {
         jwt.verify(token, 'resetSecret', async (err, decoded) => {
             if (err) {
                 // Si el token no es válido, devolver un error de token inválido
-                const jsonResponse = createJSONResponse(400, 'Token inválido', {});
+                const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['Token inválido'] });
                 return res.status(400).json(jsonResponse);
             }
 
@@ -124,7 +123,7 @@ export const changePassword = async (req, res) => {
             const user = await User.findById(userId);
             if (!user) {
                 // Si el usuario no existe, devolver un error
-                const jsonResponse = createJSONResponse(404, 'Usuario no encontrado', {});
+                const jsonResponse = createJSONResponse(404, 'Datos de entrada no válidos', { errors: ['Usuario no encontrado'] });
                 return res.status(404).json(jsonResponse);
             }
 
@@ -132,7 +131,7 @@ export const changePassword = async (req, res) => {
             const isSamePassword = await user.comparePassword(newPassword);
             if (isSamePassword) {
                 // Si la nueva contraseña es igual a la anterior, devolver un error
-                const jsonResponse = createJSONResponse(400, 'La nueva contraseña no puede ser igual a la anterior', {});
+                const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['La nueva contraseña no puede ser igual a la anterior'] });
                 return res.status(400).json(jsonResponse);
             }
 

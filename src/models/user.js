@@ -29,13 +29,13 @@ export default class User {
         return this.#password;
     }
 
-    // Método estático para buscar un usuario por su ID
+    // Método estático para buscar un usuario por su ID que no haya sido eliminado lógicamente
     static async findById(userId) {
         const query = `
             SELECT u.*, r.nombre AS nombre_rol
             FROM usuarios u
             LEFT JOIN roles r ON u.rol_id = r.id
-            WHERE u.id = ?
+            WHERE u.id = ? AND u.enabled = 1
         `;
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [userId]);
         if (result && result.length > 0) {
@@ -49,13 +49,13 @@ export default class User {
         return await bcrypt.compare(password, this.getPassword());
     }
 
-    // Método estático para buscar un usuario por su correo electrónico
+    // Método estático para buscar un usuario por su correo electrónico que no haya sido eliminado lógicamente
     static async findByEmail(email) {
         const query = `
             SELECT u.*, r.nombre AS nombre_rol
             FROM usuarios u
             LEFT JOIN roles r ON u.rol_id = r.id
-            WHERE u.email = ?
+            WHERE u.email = ? AND u.enabled = 1
         `;
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [email]);
         if (result && result.length > 0) {
@@ -82,21 +82,36 @@ export default class User {
         }
     }
 
+    // Método para obtener todos los usuarios que no han sido eliminados lógicamente
     static async getAll() {
         const query = `
             SELECT u.*, r.nombre AS nombre_rol
             FROM usuarios u
             LEFT JOIN roles r ON u.rol_id = r.id
+            WHERE u.enabled = 1
         `;
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
         return result;
     }
     
-    // Método estático para validar si un correo electrónico ya existe en la base de datos
+    // Método estático para verificar si el correo electrónico existe y si el usuario asociado está marcado como eliminado lógicamente
     static async emailExists(email) {
         try {
-            const user = await this.findByEmail(email);
-            return user !== null; // Si el usuario existe, retorna true; de lo contrario, retorna false
+            const query = `
+                SELECT id, enabled
+                FROM usuarios
+                WHERE email = ?;
+            `;
+            const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [email]);
+            if (result && result.length > 0) {
+                const user = result[0];
+                if (user.enabled == 1) {
+                    return { exists: true, deleted: false, userId: user.id }; // Si el usuario está habilitado, devolver el ID del usuario
+                } else {
+                    return { exists: true, deleted: true, userId: user.id }; // Si el usuario está marcado como eliminado, devolver un objeto indicando que existe pero está eliminado, junto con el ID del usuario
+                }
+            }
+            return { exists: false }; // Si no se encuentra ningún registro, devolver un objeto indicando que no existe
         } catch (error) {
             console.error('Error al verificar si el correo electrónico existe:', error);
             throw error;
@@ -150,7 +165,11 @@ export default class User {
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}
                 WHERE id = ?
             `;
+
+            console.log(updateQuery);
             const updateParams = [...Object.values(fieldsToUpdate), userId];
+            console.log(updateParams);
+            
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
             console.log('Campos actualizados correctamente');
         } catch (error) {
@@ -159,14 +178,14 @@ export default class User {
         }
     }
 
-    // Método estático para eliminar un usuario por su ID
+    // Método estático para eliminar lógicamente un usuario por su ID
     static async delete(userId) {
         try {
-            const deleteQuery = 'DELETE FROM usuarios WHERE id = ?';
-            await executeQuery(process.env.DB_CONNECTION_ODBC, deleteQuery, [userId]);
+            const updateQuery = 'UPDATE usuarios SET enabled = 0 WHERE id = ?';
+            await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, [userId]);
             console.log('Usuario eliminado correctamente');
         } catch (error) {
-            console.error('Error al eliminar el usuario:', error);
+            console.error('Error al eliminar lógicamente el usuario:', error);
             throw error;
         }
     }

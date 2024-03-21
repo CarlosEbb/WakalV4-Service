@@ -22,3 +22,7 @@ export async function addToInvalidTokens(user_id, token, reason) {
 export async function generateResetToken(userId) {
     return jwt.sign({ userId }, 'resetSecret', { expiresIn: '1h' });
 }
+
+export async function generateAuthToken(user) {
+    return jwt.sign({ id: user.id, rol_id: user.rol_id }, 'secretKey', { expiresIn: '24h' });
+}
