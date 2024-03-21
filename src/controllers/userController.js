@@ -2,6 +2,7 @@
 
 import User from '../models/user.js';
 import {createJSONResponse} from '../utils/responseUtils.js';
+import Joi from 'joi-es';
 
 // Metodo para obtener todos los usuarios
 export const getAllUsers = async (req, res) => {
@@ -35,11 +36,43 @@ export const getUserById = async (req, res) => {
     }
 };
 
-// Controlador para crear un nuevo usuario
+
+// Definir el esquema de validación con Joi
+const createUserSchema = Joi.object({
+    email: Joi.string().email().max(150).required(),
+    password: Joi.string().min(6).max(15).required(),
+    rol_id: Joi.number().integer().required(),
+    nombre: Joi.string().max(150).required(),
+    apellido: Joi.string().max(150).required(),
+    prefijo_cedula: Joi.string().max(5).required(),
+    cedula: Joi.string().max(100).required(),
+    access_expiration: Joi.date().allow(null),
+});
+
+// Motodo para crear un nuevo usuario
 export const createUsuario = async (req, res) => {
     try {
+        // Validar los datos de entrada con Joi
+        const { error, value } = createUserSchema.validate(req.body, { abortEarly: false });
+        if (error) {
+            const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
+            return res.status(400).json(jsonResponse);
+        }
+
         const { email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration } = req.body;
-        const newUserId = await User.create({ email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration });
+        const registered_by_user_id = req.user.id; // Obtener el ID del usuario que inició sesión desde el token
+
+        // Verificar si el correo electrónico ya está registrado
+        const emailExists = await User.emailExists(email);
+        if (emailExists) {
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', {errors: ['El correo electrónico ya está registrado']});
+            return res.status(400).json(jsonResponse);
+        }
+
+        // Si el correo electrónico no está registrado, proceder con la creación del usuario
+        const newUserId = await User.create({ email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, registered_by_user_id });
+
         const jsonResponse = createJSONResponse(201, 'Usuario creado correctamente', { userId: newUserId });
         return res.status(201).json(jsonResponse);
     } catch (error) {
@@ -49,11 +82,32 @@ export const createUsuario = async (req, res) => {
     }
 };
 
-// Método para actualizar un usuario por su ID
+// Definir el esquema de validación con Joi
+const updateUserSchema = Joi.object({
+    email: Joi.string().email().max(150),
+    password: Joi.string().min(6).max(15),
+    rol_id: Joi.number().integer(),
+    nombre: Joi.string().max(150),
+    apellido: Joi.string().max(150),
+    prefijo_cedula: Joi.string().max(5),
+    cedula: Joi.string().max(100),
+    access_expiration: Joi.date().allow(null),
+});
+
+// Metodo para actualizar un usuario por su ID
 export const updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
         const fieldsToUpdate = req.body;
+
+        // Validar los campos recibidos en la solicitud
+        const { error } = updateUserSchema.validate(fieldsToUpdate, { abortEarly: false });
+        if (error) {
+            const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
+            return res.status(400).json(jsonResponse);
+        }
+
         await User.updateFields(userId, fieldsToUpdate);
         const jsonResponse = createJSONResponse(200, 'Usuario actualizado correctamente', {});
         return res.status(200).json(jsonResponse);
@@ -63,6 +117,7 @@ export const updateUser = async (req, res) => {
         return res.status(500).json(jsonResponse);
     }
 };
+
 
 // Metodo para eliminar un usuario por su ID
 export const deleteUser = async (req, res) => {

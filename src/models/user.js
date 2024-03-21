@@ -3,6 +3,7 @@
 import { executeQuery } from '../utils/dbUtils.js';
 import bcrypt from 'bcrypt';
 
+
 export default class User {
     #password; // Propiedad privada
 
@@ -19,6 +20,9 @@ export default class User {
         this.access_expiration = data.access_expiration;
         this.created_at = data.created_at;
         this.updated_at = data.updated_at;
+
+        this.registered_by_user_id = data.registered_by_user_id;
+        this.enabled = data.enabled;
     }
 
     getPassword() {
@@ -87,24 +91,42 @@ export default class User {
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
         return result;
     }
+    
+    // Método estático para validar si un correo electrónico ya existe en la base de datos
+    static async emailExists(email) {
+        try {
+            const user = await this.findByEmail(email);
+            return user !== null; // Si el usuario existe, retorna true; de lo contrario, retorna false
+        } catch (error) {
+            console.error('Error al verificar si el correo electrónico existe:', error);
+            throw error;
+        }
+    }
 
     // Método estático para crear un usuario
     static async create(data) {
         try {
             const insertQuery = `
-                INSERT INTO usuarios (email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO usuarios (email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, registered_by_user_id, enabled)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
+
+            // Hashear la contraseña antes de almacenarla en la base de datos
+            const hashedPassword = await bcrypt.hash(data.password, 10);
+
             const insertParams = [
                 data.email,
-                data.password,
+                hashedPassword,
                 data.rol_id,
                 data.nombre,
                 data.apellido,
                 data.prefijo_cedula || null,
                 data.cedula || null,
-                data.access_expiration || null
+                data.access_expiration || null,
+                data.registered_by_user_id || null,
+                data.enabled || 1
             ];
+
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, insertQuery, insertParams);
             console.log('Usuario creado correctamente');
             return result.insertId; // Retorna el ID del nuevo usuario creado
@@ -117,6 +139,12 @@ export default class User {
     // Método estático para actualizar múltiples campos de un usuario por su ID
     static async updateFields(userId, fieldsToUpdate) {
         try {
+            // Verificar si el campo de password está presente y encriptarlo si es necesario
+            if (fieldsToUpdate.hasOwnProperty('password')) {
+                const hashedPassword = await bcrypt.hash(fieldsToUpdate.password, 10);
+                fieldsToUpdate.password = hashedPassword;
+            }
+
             const updateQuery = `
                 UPDATE usuarios
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}

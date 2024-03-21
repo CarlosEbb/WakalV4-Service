@@ -3,7 +3,7 @@
 export default function checkRolePermissions(allowedRoles) {
     return function(req, res, next) {
         // Verificar el rol del usuario extraído del token JWT
-        const userRole = req.user.rolId; // Suponiendo que el rol del usuario está almacenado en req.user.rolId
+        const userRole = req.user.rol_id; // Suponiendo que el rol del usuario está almacenado en req.user.rolId
 
         // Verificar si el usuario tiene uno de los roles permitidos
         if (allowedRoles.includes(userRole)) {

@@ -7,5 +7,6 @@ npm install bcrypt
 npm install csurf
 npm install cookie-parser
 
-npm install dotenv
 npm install nodemailer
+
+npm install joi

@@ -32,7 +32,7 @@ export const login = async (req, res) => {
             if (!user.access_expiration || new Date(user.access_expiration) > new Date()) {
                 // Generar un token JWT
                 
-                const token = jwt.sign({ userId: user.id, rolId: user.rol_id }, 'secretKey', { expiresIn: '1h' });
+                const token = jwt.sign({ id: user.id, rol_id: user.rol_id }, 'secretKey', { expiresIn: '1h' });
 
                 // Devolver el token y los datos del usuario en la respuesta dentro del campo data
                 const jsonResponse = createJSONResponse(200, 'Inicio de sesión exitoso', {
