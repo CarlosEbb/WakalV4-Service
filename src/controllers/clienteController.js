@@ -116,15 +116,28 @@ export const updateCliente = async (req, res) => {
             return res.status(400).json(jsonResponse);
         }
 
-
         // Validar los datos de entrada con Joi
-        const { error, value } = updateClienteSchema.validate(fieldsToUpdate, { abortEarly: false });
+        const { error } = updateClienteSchema.validate(fieldsToUpdate, { abortEarly: false });
         if (error) {
             const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
             return res.status(400).json(jsonResponse);
         }
 
+        // Verificar si el RIF está siendo actualizado y si pertenece al cliente que se está actualizando
+        if (fieldsToUpdate.hasOwnProperty('rif')) {
+            const clientRif = fieldsToUpdate.rif;
+            const existingClient = await Cliente.findByRif(clientRif);
+            if (existingClient) {
+                if (existingClient.id != clienteId) {
+                    // El RIF pertenece a otro cliente, no se puede actualizar
+                    const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El RIF pertenece a otro cliente'] } );
+                    return res.status(400).json(jsonResponse);
+                }
+            }
+        }
+
+        // Si pasa todas las validaciones, actualizar el cliente
         await Cliente.updateFields(clienteId, fieldsToUpdate);
         const jsonResponse = createJSONResponse(200, 'Cliente actualizado correctamente', {});
         return res.status(200).json(jsonResponse);

@@ -13,6 +13,21 @@ export default class Cliente {
         this.updated_at = data.updated_at || null;
     }
 
+    // Método estático para buscar un cliente por su RIF
+    static async findByRif(rif) {
+        try {
+            const query = 'SELECT * FROM clientes WHERE rif = ?';
+            const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [rif]);
+            if (result && result.length > 0) {
+                return new Cliente(result[0]);
+            }
+            return null;
+        } catch (error) {
+            console.error('Error al obtener el cliente por RIF:', error);
+            throw error;
+        }
+    }
+
     // Método estático para verificar si el RIF existe y si el cliente asociado está marcado como eliminado lógicamente
     static async rifExists(rif) {
         try {
