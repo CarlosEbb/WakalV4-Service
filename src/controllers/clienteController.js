@@ -2,7 +2,7 @@
 
 import Cliente from '../models/cliente.js';
 import {createJSONResponse} from '../utils/responseUtils.js';
-import Joi from 'joi-es';
+import Joi from 'joi';
 
 // Controlador para obtener todos los clientes
 export const getAllClientes = async (req, res) => {

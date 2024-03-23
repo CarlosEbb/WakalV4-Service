@@ -2,7 +2,7 @@
 
 import User from '../models/user.js';
 import {createJSONResponse} from '../utils/responseUtils.js';
-import Joi from 'joi-es';
+import Joi from 'joi';
 
 // Metodo para obtener todos los usuarios
 export const getAllUsers = async (req, res) => {
