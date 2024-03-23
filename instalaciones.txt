@@ -10,3 +10,4 @@ npm install cookie-parser
 npm install nodemailer
 
 npm install joi
+npm install joi-es
