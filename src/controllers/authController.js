@@ -5,8 +5,8 @@ import nodemailer from 'nodemailer';
 
 import User from '../models/user.js';
 
-import {generateResetToken, generateAuthToken, isTokenInvalid, addToInvalidTokens} from '../utils/tokenUtils.js';
-import {createJSONResponse} from '../utils/responseUtils.js';
+import { generateResetToken, generateAuthToken, isTokenInvalid, addToInvalidTokens } from '../utils/tokenUtils.js';
+import { createJSONResponse } from '../utils/responseUtils.js';
 import { insertAuditoria } from '../utils/auditUtils.js';
 import { sendEmail } from '../utils/emailController.js';
 
@@ -17,7 +17,7 @@ import { sendEmail } from '../utils/emailController.js';
 export const login = async (req, res) => {
     try {
         if (!req.body || !req.body.email || !req.body.password) {
-            const jsonResponse = createJSONResponse(400, 'Solicitud incorrecta: El cuerpo de la solicitud debe contener email y password', {});
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['Solicitud incorrecta: El cuerpo de la solicitud debe contener email y password'] });
             return res.status(400).json(jsonResponse);
         }
 
@@ -31,7 +31,7 @@ export const login = async (req, res) => {
             // Verificar si el campo access_expiration es null o mayor que la fecha actual
             if (!user.access_expiration || new Date(user.access_expiration) > new Date()) {
                 // Generar un token JWT
-                
+
                 const token = await generateAuthToken(user);
                 // Devolver el token y los datos del usuario en la respuesta dentro del campo data
                 const jsonResponse = createJSONResponse(200, 'Inicio de sesión exitoso', {
@@ -101,7 +101,7 @@ export const changePassword = async (req, res) => {
 
         // Verificar si el token está en la lista de tokens inválidos
         const TokenInvalid = await isTokenInvalid(token);
-        
+
         if (TokenInvalid) {
             // Si el token está en la lista de tokens inválidos, devolver un error
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['Token inválido o ya utilizado'] });
@@ -136,7 +136,7 @@ export const changePassword = async (req, res) => {
             }
 
             // Actualizar la contraseña del usuario en la base de datos a través del modelo
-            await User.updatePassword(user.id,newPassword);
+            await User.updatePassword(user.id, newPassword);
 
             // Marcar el token actual como inválido agregándolo a la lista de tokens inválidos
             await addToInvalidTokens(user.id, token, 'Cambio de contraseña');

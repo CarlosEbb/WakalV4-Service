@@ -11,6 +11,14 @@ export default class Cliente {
         this.logo = data.logo || null;
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
+
+        this.enabled = data.enabled || null;
+        this.name_bd_table = data.name_bd_table || null;
+        this.name_bd_column_numero_control = data.name_bd_column_numero_control || null;
+        this.name_bd_column_fecha_emision = data.name_bd_column_fecha_emision || null;
+        this.name_bd_column_fecha_emision_format = data.name_bd_column_fecha_emision_format || null;
+        this.name_bd_column_fecha_asignacion = data.name_bd_column_fecha_asignacion || null;
+        this.name_bd_column_fecha_asignacion_format = data.name_bd_column_fecha_asignacion_format || null;
     }
 
     // Método estático para buscar un cliente por su RIF

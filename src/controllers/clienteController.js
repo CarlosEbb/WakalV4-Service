@@ -1,14 +1,14 @@
 // clienteController.js
 
 import Cliente from '../models/cliente.js';
-import {createJSONResponse} from '../utils/responseUtils.js';
+import { createJSONResponse } from '../utils/responseUtils.js';
 import Joi from 'joi';
 
 // Controlador para obtener todos los clientes
 export const getAllClientes = async (req, res) => {
     try {
         const clientes = await Cliente.getAll();
-       
+
         const jsonResponse = createJSONResponse(200, 'Clientes encontrados', clientes);
         return res.status(200).json(jsonResponse);
     } catch (error) {
@@ -72,7 +72,7 @@ export const createCliente = async (req, res) => {
         return res.status(201).json(jsonResponse);
     } catch (error) {
         console.error('Error al crear un nuevo cliente:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
@@ -91,7 +91,7 @@ export const getClienteById = async (req, res) => {
         }
     } catch (error) {
         console.error('Error al obtener el cliente por ID:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
@@ -131,7 +131,7 @@ export const updateCliente = async (req, res) => {
             if (existingClient) {
                 if (existingClient.id != clienteId) {
                     // El RIF pertenece a otro cliente, no se puede actualizar
-                    const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El RIF pertenece a otro cliente'] } );
+                    const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El RIF pertenece a otro cliente'] });
                     return res.status(400).json(jsonResponse);
                 }
             }
@@ -143,7 +143,7 @@ export const updateCliente = async (req, res) => {
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al actualizar el cliente:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
@@ -158,7 +158,7 @@ export const deleteCliente = async (req, res) => {
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al eliminar el cliente:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };

@@ -11,3 +11,19 @@ npm install nodemailer
 
 npm install joi
 npm install joi-es
+
+npm install cors
+npm install moment
+
+
+//.env example
+APP_NAME=Wakal_4.0
+APP_URL=http://localhost:8000
+
+DB_CONNECTION_ODBC=wakalSL
+
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=
+SMTP_PASS=

@@ -1,7 +1,7 @@
 //userController.js
 
 import User from '../models/user.js';
-import {createJSONResponse} from '../utils/responseUtils.js';
+import { createJSONResponse } from '../utils/responseUtils.js';
 import Joi from 'joi';
 
 // Metodo para obtener todos los usuarios
@@ -12,7 +12,7 @@ export const getAllUsers = async (req, res) => {
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al obtener todos los usuarios:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
@@ -31,7 +31,7 @@ export const getUserById = async (req, res) => {
         }
     } catch (error) {
         console.error('Error al obtener el usuario por ID:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
@@ -86,7 +86,7 @@ export const createUsuario = async (req, res) => {
         return res.status(201).json(jsonResponse);
     } catch (error) {
         console.error('Error al crear un nuevo usuario:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
@@ -137,7 +137,7 @@ export const updateUser = async (req, res) => {
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al actualizar el usuario:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
@@ -152,7 +152,7 @@ export const deleteUser = async (req, res) => {
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al eliminar el usuario:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
         return res.status(500).json(jsonResponse);
     }
 };
