@@ -26,7 +26,7 @@ async function getInfoTotalesSemanales(cliente, nombreMes, semanasDelMes) {
         
         consulta = consulta.slice(0, -2); // Eliminar los últimos dos caracteres
         consulta += " FROM " + procesarConsultaMes(cliente.name_bd_table, nombreMes);
-
+        
         const result = await executeQuery(cliente.connections, consulta, []);
 
         result.forEach(objeto => {
