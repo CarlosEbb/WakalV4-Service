@@ -10,6 +10,7 @@ export default class User {
     constructor(data) {
         this.id = data.id;
         this.email = data.email;
+        this.email_alternativo = data.email_alternativo;
         this.#password = data.password;
         this.rol_id = data.rol_id;
         this.nombre_rol = data.nombre_rol;
@@ -18,6 +19,7 @@ export default class User {
         this.prefijo_cedula = data.prefijo_cedula;
         this.cedula = data.cedula;
         this.access_expiration = data.access_expiration;
+        this.ultima_conexion = data.ultima_conexion;
         this.created_at = data.created_at;
         this.updated_at = data.updated_at;
 
@@ -55,9 +57,9 @@ export default class User {
             SELECT u.*, r.nombre AS nombre_rol
             FROM usuarios u
             LEFT JOIN roles r ON u.rol_id = r.id
-            WHERE u.email = ? AND u.enabled = 1
+            WHERE (u.email = ? OR u.email_alternativo = ?) AND u.enabled = 1
         `;
-        const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [email]);
+        const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [email, email]);
         if (result && result.length > 0) {
             return new User(result[0]);
         }

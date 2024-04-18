@@ -1,7 +1,7 @@
 //authRoutes.js
 import express from 'express';
 const router = express.Router();
-import {login, logout, resetPasswordRequest, changePassword} from '../controllers/authController.js';
+import {login, logout, resetPasswordRequest, changePassword, tokenVerify} from '../controllers/authController.js';
 
 // Ruta para iniciar sesión
 router.post('/login', login);
@@ -14,5 +14,7 @@ router.post('/reset-password-request', resetPasswordRequest);
 
 // Ruta para cambiar la contraseña
 router.post('/change-password', changePassword);
+
+router.post('/token-verify', tokenVerify);
 
 export default router;

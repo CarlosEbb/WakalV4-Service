@@ -2,8 +2,11 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
-
 import User from '../models/user.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import moment from 'moment';
 
 import { generateResetToken, generateAuthToken, isTokenInvalid, addToInvalidTokens } from '../utils/tokenUtils.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
@@ -31,13 +34,18 @@ export const login = async (req, res) => {
             // Verificar si el campo access_expiration es null o mayor que la fecha actual
             if (!user.access_expiration || new Date(user.access_expiration) > new Date()) {
                 // Generar un token JWT
-
                 const token = await generateAuthToken(user);
+
+                // Actualizar ultima_conexion
+                const now = moment().format('YYYY-MM-DD HH:mm:ss.SSS');
+                await User.updateFields(user.id, { ultima_conexion: now });
+
                 // Devolver el token y los datos del usuario en la respuesta dentro del campo data
                 const jsonResponse = createJSONResponse(200, 'Inicio de sesión exitoso', {
                     token,
                     ...user
                 });
+
                 return res.status(200).json(jsonResponse);
             } else {
                 const jsonResponse = createJSONResponse(401, 'Datos de entrada no válidos', { errors: ['Credenciales inválidas: Tiempo de acceso expirado'] });
@@ -54,6 +62,7 @@ export const login = async (req, res) => {
         res.status(500).json(jsonResponse);
     }
 };
+
 
 
 
@@ -79,12 +88,28 @@ export const resetPasswordRequest = async (req, res) => {
             // Generar un token de restablecimiento de contraseña
             const resetToken = await generateResetToken(user.id);
 
-            // Envía el correo electrónico de recuperación de contraseña
-            const textEmail = `Para restablecer tu contraseña, haz clic en el siguiente enlace: http://tuapp.com/reset-password?token=${resetToken}`;
-            await sendEmail(email, 'Recuperación de contraseña', textEmail);
+            // Obtener la ruta del archivo actual
+            const __filename = fileURLToPath(import.meta.url);
+            const __dirname = path.dirname(__filename);
 
-            const jsonResponse = createJSONResponse(200, 'Correo electrónico de recuperación de contraseña enviado correctamente', {});
-            res.status(200).json(jsonResponse);
+            // Construir la ruta al archivo HTML
+            const filePath = path.join(__dirname, '..', 'views', 'email', 'resetPassword.html');
+
+            // Leer el contenido del archivo HTML
+            const htmlEmail = fs.readFileSync(filePath, 'utf8');
+            
+             // Reemplazar variables en el HTML
+            let replacedHtmlEmail = htmlEmail.replace('{{reset_token}}', process.env.APP_URL+"/auth/resetPassword?email="+user.email+"&token="+resetToken);
+            replacedHtmlEmail = replacedHtmlEmail.replace('{{first_name}}', user.nombre);
+            replacedHtmlEmail = replacedHtmlEmail.replace('{{last_name}}', user.apellido);
+            replacedHtmlEmail = replacedHtmlEmail.replace('{{correo_user}}', email);
+            replacedHtmlEmail = replacedHtmlEmail.replace('{{url_app}}', process.env.APP_URL);
+
+             // Envía el correo electrónico de recuperación de contraseña con el HTML cargado desde el archivo
+             await sendEmail(email, 'Recuperación de contraseña', replacedHtmlEmail);
+ 
+             const jsonResponse = createJSONResponse(200, 'Correo electrónico de recuperación de contraseña enviado correctamente', {});
+             res.status(200).json(jsonResponse);
         } else {
             const jsonResponse = createJSONResponse(404, 'Datos de entrada no válidos', { errors: ['El correo electrónico no coincide con nuestros registros'] });
             res.status(404).json(jsonResponse);
@@ -98,13 +123,12 @@ export const resetPasswordRequest = async (req, res) => {
 export const changePassword = async (req, res) => {
     try {
         const { token, newPassword } = req.body;
-
         // Verificar si el token está en la lista de tokens inválidos
         const TokenInvalid = await isTokenInvalid(token);
 
         if (TokenInvalid) {
             // Si el token está en la lista de tokens inválidos, devolver un error
-            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['Token inválido o ya utilizado'] });
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['¡Ups! El token que has introducido no es válido o ya ha sido utilizado'] });
             return res.status(400).json(jsonResponse);
         }
 
@@ -112,7 +136,7 @@ export const changePassword = async (req, res) => {
         jwt.verify(token, 'resetSecret', async (err, decoded) => {
             if (err) {
                 // Si el token no es válido, devolver un error de token inválido
-                const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['Token inválido'] });
+                const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['¡Ups! El token que has introducido no es válido o ya ha sido utilizado'] });
                 return res.status(400).json(jsonResponse);
             }
 
@@ -121,6 +145,7 @@ export const changePassword = async (req, res) => {
 
             // Buscar al usuario por su ID
             const user = await User.findById(userId);
+            
             if (!user) {
                 // Si el usuario no existe, devolver un error
                 const jsonResponse = createJSONResponse(404, 'Datos de entrada no válidos', { errors: ['Usuario no encontrado'] });
@@ -128,13 +153,14 @@ export const changePassword = async (req, res) => {
             }
 
             // Validar si la nueva contraseña es igual a la anterior
+            
             const isSamePassword = await user.comparePassword(newPassword);
             if (isSamePassword) {
                 // Si la nueva contraseña es igual a la anterior, devolver un error
                 const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['La nueva contraseña no puede ser igual a la anterior'] });
                 return res.status(400).json(jsonResponse);
             }
-
+            
             // Actualizar la contraseña del usuario en la base de datos a través del modelo
             await User.updatePassword(user.id, newPassword);
 
@@ -147,6 +173,43 @@ export const changePassword = async (req, res) => {
         });
     } catch (error) {
         console.error('Error al cambiar la contraseña:', error);
+        // Ejemplo de respuesta de error utilizando createJSONResponse
+        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        res.status(500).json(jsonResponse);
+    }
+};
+
+export const tokenVerify = async (req, res) => {
+    try {
+        const {token, type} = req.body;
+
+        // Verificar si el token está en la lista de tokens inválidos
+        const TokenInvalid = await isTokenInvalid(token);
+        
+        if (TokenInvalid) {
+            // Si el token está en la lista de tokens inválidos, devolver un error
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El token proporcionado es inválido.'] });
+            return res.status(400).json(jsonResponse);
+        }
+        
+        const secretKey = type === "ResetToken" ? 'resetSecret' : type === "AuthToken" ? 'secretKey' : null;
+        
+        if (!secretKey) {
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El token proporcionado es inválido.'] });
+            return res.status(400).json(jsonResponse);
+        }
+        
+        jwt.verify(token, secretKey, async (err, decoded) => {
+            if (err) {
+                const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El token proporcionado es inválido.'] });
+                return res.status(400).json(jsonResponse);
+            }
+            const jsonResponse = createJSONResponse(200, '¡Éxito! El token es válido.', {});
+            res.status(200).json(jsonResponse);
+        });
+        
+    } catch (error) {
+        console.error('Error al validar el token:', error);
         // Ejemplo de respuesta de error utilizando createJSONResponse
         const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
         res.status(500).json(jsonResponse);
