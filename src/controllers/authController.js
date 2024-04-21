@@ -27,7 +27,7 @@ export const login = async (req, res) => {
         const { email, password } = req.body;
 
         // Buscar el usuario por su correo electrónico
-        const user = await User.findByEmail(email);
+        const user = await User.findByEmailOrUsername(email);
 
         // Verificar si se encontró un usuario y si la contraseña coincide
         if (user && await user.comparePassword(password)) {
@@ -82,8 +82,8 @@ export const resetPasswordRequest = async (req, res) => {
         const { email } = req.body;
 
         // Buscar el usuario por su correo electrónico
-        const user = await User.findByEmail(email);
-
+        const user = await User.findByEmailOrUsername(email);
+        
         if (user) {
             // Generar un token de restablecimiento de contraseña
             const resetToken = await generateResetToken(user.id);
@@ -142,7 +142,7 @@ export const changePassword = async (req, res) => {
 
             // Obtener el ID del usuario del token decodificado
             const userId = decoded.userId;
-
+            
             // Buscar al usuario por su ID
             const user = await User.findById(userId);
             

@@ -7,6 +7,7 @@ import cors from 'cors';
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import rolRoutes from './routes/rolRoutes.js';
 import clienteRoutes from './routes/clienteRoutes.js';
 import consultaRoutes from './routes/consultaRoutes.js';
 import totalDataRoutes from './routes/totalDataRoutes.js';
@@ -39,6 +40,9 @@ app.use('/auth', authRoutes);
 
 // Rutas de usuarios
 app.use('/usuarios', userRoutes);
+
+// Rutas de Roles
+app.use('/roles', rolRoutes);
 
 // Rutas de clientes
 app.use('/clientes', clienteRoutes);

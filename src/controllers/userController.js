@@ -7,7 +7,13 @@ import Joi from 'joi';
 // Metodo para obtener todos los usuarios
 export const getAllUsers = async (req, res) => {
     try {
-        const users = await User.getAll();
+        const rol_id = req.user.rol_id;
+        let users = [];
+        if(rol_id === 1){
+            users = await User.getAll();
+        }else{
+            users = await User.getAll(req.user);
+        }
         const jsonResponse = createJSONResponse(200, 'Usuarios obtenidos correctamente', users);
         return res.status(200).json(jsonResponse);
     } catch (error) {
@@ -40,6 +46,7 @@ export const getUserById = async (req, res) => {
 // Definir el esquema de validación con Joi
 const createUserSchema = Joi.object({
     email: Joi.string().email().max(150).required(),
+   
     password: Joi.string().min(6).max(15).required(),
     rol_id: Joi.number().integer().required(),
     nombre: Joi.string().max(150).required(),
@@ -47,6 +54,13 @@ const createUserSchema = Joi.object({
     prefijo_cedula: Joi.string().max(5).required(),
     cedula: Joi.string().max(100).required(),
     access_expiration: Joi.date().allow(null),
+    email_alternativo: Joi.string().email().max(150).required(),
+    telefono: Joi.string().max(11).required(),
+    department: Joi.string(),
+    jurisdiccion_estado: Joi.string(),
+    jurisdiccion_region: Joi.string(),
+    jurisdiccion_sector: Joi.string(),
+    cargo: Joi.string(),
 });
 
 // Motodo para crear un nuevo usuario
@@ -121,7 +135,7 @@ export const updateUser = async (req, res) => {
         // Verificar si el correo electrónico está siendo actualizado y si es así, si pertenece al usuario que se está actualizando
         if (fieldsToUpdate.hasOwnProperty('email')) {
             const userEmail = fieldsToUpdate.email;
-            const existingUser = await User.findByEmail(userEmail);
+            const existingUser = await User.findByEmailOrUsername(userEmail);
             if (existingUser) {
                 if (existingUser.id != userId) {
                     // El correo electrónico pertenece a otro usuario, no se puede actualizar

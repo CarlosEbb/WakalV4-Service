@@ -9,6 +9,7 @@ export default class User {
 
     constructor(data) {
         this.id = data.id;
+        this.username = data.username;
         this.email = data.email;
         this.email_alternativo = data.email_alternativo;
         this.#password = data.password;
@@ -18,13 +19,29 @@ export default class User {
         this.apellido = data.apellido;
         this.prefijo_cedula = data.prefijo_cedula;
         this.cedula = data.cedula;
+        this.department = data.department;
+        this.img_profile = data.img_profile;
         this.access_expiration = data.access_expiration;
         this.ultima_conexion = data.ultima_conexion;
         this.created_at = data.created_at;
         this.updated_at = data.updated_at;
-
         this.registered_by_user_id = data.registered_by_user_id;
         this.enabled = data.enabled;
+        this.telefono = data.telefono;
+        this.jurisdiccion_estado = data.jurisdiccion_estado;
+        this.jurisdiccion_region = data.jurisdiccion_region;
+        this.jurisdiccion_sector = data.jurisdiccion_sector;
+        this.cargo = data.cargo;
+        this.cod_area = data.cod_area;
+        
+        if(data.rol_id == 3){
+            this.cliente_id = data.cliente_id;
+            this.rif = data.rif;
+            this.nombre_cliente = data.nombre_cliente;
+            this.logo = data.logo;
+            this.rif = data.rif;
+        }
+
     }
 
     getPassword() {
@@ -39,6 +56,7 @@ export default class User {
             LEFT JOIN roles r ON u.rol_id = r.id
             WHERE u.id = ? AND u.enabled = 1
         `;
+        console.log(userId);
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [userId]);
         if (result && result.length > 0) {
             return new User(result[0]);
@@ -52,19 +70,22 @@ export default class User {
     }
 
     // Método estático para buscar un usuario por su correo electrónico que no haya sido eliminado lógicamente
-    static async findByEmail(email) {
+    static async findByEmailOrUsername(email) {
         const query = `
-            SELECT u.*, r.nombre AS nombre_rol
+            SELECT u.*, r.nombre AS nombre_rol, c.*, c.id as cliente_id,  u.id as id, u.enabled as enabled, u.created_at as created_at, u.updated_at as updated_at
             FROM usuarios u
             LEFT JOIN roles r ON u.rol_id = r.id
-            WHERE (u.email = ? OR u.email_alternativo = ?) AND u.enabled = 1
+            LEFT JOIN usuarios_clientes uc ON u.id = uc.user_id
+            LEFT JOIN clientes c ON uc.cliente_id = c.id
+            WHERE (u.email = ? OR u.email_alternativo = ? OR u.username = ?) AND u.enabled = 1
         `;
-        const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [email, email]);
+        const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [email, email, email]);
         if (result && result.length > 0) {
             return new User(result[0]);
         }
         return null;
     }
+    
 
 
     static async updatePassword(userId, newPassword) {
@@ -85,16 +106,25 @@ export default class User {
     }
 
     // Método para obtener todos los usuarios que no han sido eliminados lógicamente
-    static async getAll() {
-        const query = `
-            SELECT u.*, r.nombre AS nombre_rol
-            FROM usuarios u
-            LEFT JOIN roles r ON u.rol_id = r.id
-            WHERE u.enabled = 1
-        `;
-        const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
-        return result;
+    static async getAll(user = null) {
+            let query = `
+                SELECT u.*, r.nombre AS nombre_rol
+                FROM usuarios u
+                LEFT JOIN roles r ON u.rol_id = r.id
+                WHERE u.enabled = 1
+            `;
+            let params = [];
+    
+            if (user !== null) {
+                query += ' AND u.rol_id = ? AND registered_by_user_id = ?';
+                params.push(user.rol_id);
+                params.push(user.id);
+            }
+    
+            const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
+            return result;
     }
+    
     
     // Método estático para verificar si el correo electrónico existe y si el usuario asociado está marcado como eliminado lógicamente
     static async emailExists(email) {
@@ -168,9 +198,7 @@ export default class User {
                 WHERE id = ?
             `;
 
-            console.log(updateQuery);
             const updateParams = [...Object.values(fieldsToUpdate), userId];
-            console.log(updateParams);
             
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
             console.log('Campos actualizados correctamente');
