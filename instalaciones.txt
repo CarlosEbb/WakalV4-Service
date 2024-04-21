@@ -27,3 +27,16 @@ SMTP_PORT=465
 SMTP_SECURE=true
 SMTP_USER=
 SMTP_PASS=
+
+
+
+prueba deply astro con express
+npm install @iconify/utils
+npm install path-to-regexp
+npm install cssesc 
+npm install html-escaper
+npm install server-destroy
+npm install kleur
+npm install clsx 
+npm install @astrojs/internal-helpers
+npm install mime
