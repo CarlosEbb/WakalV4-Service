@@ -56,7 +56,6 @@ export default class User {
             LEFT JOIN roles r ON u.rol_id = r.id
             WHERE u.id = ? AND u.enabled = 1
         `;
-        console.log(userId);
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [userId]);
         if (result && result.length > 0) {
             return new User(result[0]);
@@ -154,26 +153,36 @@ export default class User {
     static async create(data) {
         try {
             const insertQuery = `
-                INSERT INTO usuarios (email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, registered_by_user_id, enabled)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO usuarios (email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, registered_by_user_id, enabled, email_alternativo, img_profile, department, username, telefono, jurisdiccion_estado, jurisdiccion_region, jurisdiccion_sector, cargo, cod_area)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
-
+            
             // Hashear la contraseña antes de almacenarla en la base de datos
             const hashedPassword = await bcrypt.hash(data.password, 10);
-
+    
             const insertParams = [
                 data.email,
                 hashedPassword,
                 data.rol_id,
                 data.nombre,
                 data.apellido,
-                data.prefijo_cedula || null,
-                data.cedula || null,
-                data.access_expiration || null,
+                data.prefijo_cedula,
+                data.cedula,
+                data.access_expiration || null, 
                 data.registered_by_user_id || null,
-                data.enabled || 1
+                data.enabled || 1,
+                data.email_alternativo,
+                data.img_profile || null,
+                data.department || null,
+                data.username,
+                data.telefono || null,
+                data.jurisdiccion_estado || null,
+                data.jurisdiccion_region || null,
+                data.jurisdiccion_sector || null,
+                data.cargo || null,
+                data.cod_area || null
             ];
-
+    
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, insertQuery, insertParams);
             console.log('Usuario creado correctamente');
             return result.insertId; // Retorna el ID del nuevo usuario creado
@@ -182,6 +191,7 @@ export default class User {
             throw error;
         }
     }
+    
 
     // Método estático para actualizar múltiples campos de un usuario por su ID
     static async updateFields(userId, fieldsToUpdate) {
@@ -197,7 +207,7 @@ export default class User {
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}
                 WHERE id = ?
             `;
-
+           
             const updateParams = [...Object.values(fieldsToUpdate), userId];
             
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);

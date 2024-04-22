@@ -2,6 +2,7 @@
 
 import User from '../models/user.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
+import { limpiarObjeto } from '../utils/tools.js';
 import Joi from 'joi';
 
 // Metodo para obtener todos los usuarios
@@ -55,13 +56,15 @@ const createUserSchema = Joi.object({
     cedula: Joi.string().max(100).required(),
     access_expiration: Joi.date().allow(null),
     email_alternativo: Joi.string().email().max(150).required(),
-    telefono: Joi.string().max(11).required(),
+    telefono: Joi.string().min(7).max(7).required(),
     department: Joi.string(),
     jurisdiccion_estado: Joi.string(),
     jurisdiccion_region: Joi.string(),
     jurisdiccion_sector: Joi.string(),
     cargo: Joi.string(),
-});
+    cod_area: Joi.string().min(4).max(4),
+    username: Joi.string().required(),
+}).unknown();
 
 // Motodo para crear un nuevo usuario
 export const createUsuario = async (req, res) => {
@@ -84,7 +87,7 @@ export const createUsuario = async (req, res) => {
             if (existingUser.deleted) {
                 // Actualizar el usuario existente con los nuevos datos
                 const enabled = 1;
-                await User.updateFields(existingUser.userId, { email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, enabled });
+                await User.updateFields(existingUser.userId, req.body);
                 const jsonResponse = createJSONResponse(200, 'Usuario creado correctamente', { userId: existingUser.id });
                 return res.status(200).json(jsonResponse);
             } else {
@@ -94,7 +97,7 @@ export const createUsuario = async (req, res) => {
         }
 
         // Si el correo electrónico no está registrado, proceder con la creación del usuario
-        const newUserId = await User.create({ email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, registered_by_user_id });
+        const newUserId = await User.create(req.body);
 
         const jsonResponse = createJSONResponse(201, 'Usuario creado correctamente', { userId: newUserId });
         return res.status(201).json(jsonResponse);
@@ -108,15 +111,24 @@ export const createUsuario = async (req, res) => {
 
 // Definir el esquema de validación con Joi
 const updateUserSchema = Joi.object({
-    email: Joi.string().email().max(150),
-    password: Joi.string().min(6).max(15),
-    rol_id: Joi.number().integer(),
-    nombre: Joi.string().max(150),
-    apellido: Joi.string().max(150),
-    prefijo_cedula: Joi.string().max(5),
-    cedula: Joi.string().max(100),
+    email: Joi.string().email().max(150).required(),
+    nombre: Joi.string().max(150).required(),
+    apellido: Joi.string().max(150).required(),
+    prefijo_cedula: Joi.string().max(5).required(),
+    cedula: Joi.string().max(100).required(),
     access_expiration: Joi.date().allow(null),
-});
+    email_alternativo: Joi.string().email().max(150).required(),
+    telefono: Joi.string().min(7).max(7).required(),
+    department: Joi.string(),
+    jurisdiccion_estado: Joi.string(),
+    jurisdiccion_region: Joi.string(),
+    jurisdiccion_sector: Joi.string(),
+    cargo: Joi.string(),
+    cod_area: Joi.string().min(4).max(4),
+    username: Joi.string().required(),
+}).unknown();
+
+
 
 // Metodo para actualizar un usuario por su ID
 export const updateUser = async (req, res) => {
@@ -146,7 +158,8 @@ export const updateUser = async (req, res) => {
         }
 
         // Si pasa todas las validaciones, actualizar el usuario
-        await User.updateFields(userId, fieldsToUpdate);
+       
+        await User.updateFields(userId, await limpiarObjeto(fieldsToUpdate));
         const jsonResponse = createJSONResponse(200, 'Usuario actualizado correctamente', {});
         return res.status(200).json(jsonResponse);
     } catch (error) {
