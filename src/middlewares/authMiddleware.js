@@ -1,6 +1,7 @@
 //authMiddleware.js
 import jwt from 'jsonwebtoken';
 import { createJSONResponse } from '../utils/responseUtils.js';
+import { insertAuditoria } from '../utils/auditUtils.js';
 
 export default function authMiddleware(req, res, next) {    
     // Obtener el token del encabezado de autorización
@@ -21,6 +22,9 @@ export default function authMiddleware(req, res, next) {
         } else {
             // Si el token es válido, adjuntar la información del usuario al objeto de solicitud
             req.user = decodedToken;
+            
+            //insertAuditoria(req.user.id, req.user.rol_id, req.originalUrl, req.method, JSON.stringify(req.body), req.ip);
+
             next(); // Continuar con la solicitud
         }
     });

@@ -2,8 +2,10 @@
 
 import User from '../models/user.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
-import { limpiarObjeto } from '../utils/tools.js';
+import { limpiarObjeto, saveImage, deleteImage } from '../utils/tools.js';
 import Joi from 'joi';
+import fs from 'fs';
+
 
 // Metodo para obtener todos los usuarios
 export const getAllUsers = async (req, res) => {
@@ -49,7 +51,7 @@ const createUserSchema = Joi.object({
     email: Joi.string().email().max(150).required(),
    
     password: Joi.string().min(6).max(15).required(),
-    rol_id: Joi.number().integer().required(),
+    rol_id: Joi.number().integer(),
     nombre: Joi.string().max(150).required(),
     apellido: Joi.string().max(150).required(),
     prefijo_cedula: Joi.string().max(5).required(),
@@ -64,16 +66,20 @@ const createUserSchema = Joi.object({
     cargo: Joi.string(),
     cod_area: Joi.string().min(4).max(4),
     username: Joi.string().required(),
+    img_profile_file: Joi.any().meta({ swaggerType: 'file' }).optional().description('Imagen de perfil'),
 }).unknown();
 
 // Motodo para crear un nuevo usuario
 export const createUsuario = async (req, res) => {
+    const imagen = req.file;
+    delete req.body.img_profile_file;
     try {
         // Validar los datos de entrada con Joi
         const { error, value } = createUserSchema.validate(req.body, { abortEarly: false });
         if (error) {
             const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
+            req.body.img_profile = imagen ? deleteImage(imagen) : null;
             return res.status(400).json(jsonResponse);
         }
 
@@ -86,24 +92,35 @@ export const createUsuario = async (req, res) => {
         if (existingUser.exists) {
             if (existingUser.deleted) {
                 // Actualizar el usuario existente con los nuevos datos
-                const enabled = 1;
+                req.body.enabled = 1;
+                req.body.img_profile = imagen ? saveImage(imagen) : null;
                 await User.updateFields(existingUser.userId, req.body);
                 const jsonResponse = createJSONResponse(200, 'Usuario creado correctamente', { userId: existingUser.id });
                 return res.status(200).json(jsonResponse);
             } else {
                 const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El correo electrónico ya está registrado'] });
+                req.body.img_profile = imagen ? deleteImage(imagen) : null;
                 return res.status(400).json(jsonResponse);
             }
         }
 
+        if(req.user.rol_id !== 1){
+            req.body.registered_by_user_id = req.user.id;
+            req.body.rol_id = req.user.rol_id;
+        }
         // Si el correo electrónico no está registrado, proceder con la creación del usuario
+        
+        
+        req.body.img_profile = imagen ? saveImage(imagen) : null;
+        
         const newUserId = await User.create(req.body);
 
-        const jsonResponse = createJSONResponse(201, 'Usuario creado correctamente', { userId: newUserId });
+        const jsonResponse = createJSONResponse(200, 'Usuario creado correctamente', { userId: newUserId });
         return res.status(201).json(jsonResponse);
     } catch (error) {
         console.error('Error al crear un nuevo usuario:', error);
         const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        req.body.img_profile = imagen ? deleteImage(imagen) : null;
         return res.status(500).json(jsonResponse);
     }
 };
@@ -132,6 +149,7 @@ const updateUserSchema = Joi.object({
 
 // Metodo para actualizar un usuario por su ID
 export const updateUser = async (req, res) => {
+    const imagen = req.file;
     try {
         const userId = req.params.id;
         const fieldsToUpdate = req.body;
@@ -141,24 +159,26 @@ export const updateUser = async (req, res) => {
         if (error) {
             const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
+            fieldsToUpdate.img_profile = imagen ? deleteImage(imagen) : null;
             return res.status(400).json(jsonResponse);
         }
 
         // Verificar si el correo electrónico está siendo actualizado y si es así, si pertenece al usuario que se está actualizando
-        if (fieldsToUpdate.hasOwnProperty('email')) {
+        if ('email' in fieldsToUpdate) {
             const userEmail = fieldsToUpdate.email;
             const existingUser = await User.findByEmailOrUsername(userEmail);
             if (existingUser) {
                 if (existingUser.id != userId) {
                     // El correo electrónico pertenece a otro usuario, no se puede actualizar
                     const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El correo electrónico ya está en uso por otro usuario'] });
+                    fieldsToUpdate.img_profile = imagen ? deleteImage(imagen) : null;
                     return res.status(400).json(jsonResponse);
                 }
             }
         }
 
         // Si pasa todas las validaciones, actualizar el usuario
-       
+        fieldsToUpdate.img_profile = imagen ? saveImage(imagen) : null;
         await User.updateFields(userId, await limpiarObjeto(fieldsToUpdate));
         const jsonResponse = createJSONResponse(200, 'Usuario actualizado correctamente', {});
         return res.status(200).json(jsonResponse);

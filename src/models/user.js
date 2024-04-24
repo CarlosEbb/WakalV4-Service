@@ -119,7 +119,7 @@ export default class User {
                 params.push(user.rol_id);
                 params.push(user.id);
             }
-    
+            
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
             return result;
     }
@@ -180,9 +180,9 @@ export default class User {
                 data.jurisdiccion_region || null,
                 data.jurisdiccion_sector || null,
                 data.cargo || null,
-                data.cod_area || null
+                data.cod_area || null,
             ];
-    
+            
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, insertQuery, insertParams);
             console.log('Usuario creado correctamente');
             return result.insertId; // Retorna el ID del nuevo usuario creado
@@ -195,13 +195,14 @@ export default class User {
 
     // Método estático para actualizar múltiples campos de un usuario por su ID
     static async updateFields(userId, fieldsToUpdate) {
+        delete fieldsToUpdate.newPassword;
         try {
             // Verificar si el campo de password está presente y encriptarlo si es necesario
-            if (fieldsToUpdate.hasOwnProperty('password')) {
+            if (Object.prototype.hasOwnProperty.call(fieldsToUpdate, 'password')) {
                 const hashedPassword = await bcrypt.hash(fieldsToUpdate.password, 10);
                 fieldsToUpdate.password = hashedPassword;
             }
-
+    
             const updateQuery = `
                 UPDATE usuarios
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}
@@ -209,7 +210,7 @@ export default class User {
             `;
            
             const updateParams = [...Object.values(fieldsToUpdate), userId];
-            
+             
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
             console.log('Campos actualizados correctamente');
         } catch (error) {
@@ -217,7 +218,7 @@ export default class User {
             throw error;
         }
     }
-
+    
     // Método estático para eliminar lógicamente un usuario por su ID
     static async delete(userId) {
         try {

@@ -14,6 +14,7 @@ npm install joi-es
 
 npm install cors
 npm install moment
+npm install multer
 
 
 //.env example

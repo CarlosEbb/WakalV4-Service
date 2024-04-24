@@ -2,6 +2,7 @@
 import express from 'express';
 const router = express.Router();
 import {login, logout, resetPasswordRequest, changePassword, tokenVerify} from '../controllers/authController.js';
+import auditMiddleware from '../middlewares/auditMiddleware.js';
 
 // Ruta para iniciar sesión
 router.post('/login', login);

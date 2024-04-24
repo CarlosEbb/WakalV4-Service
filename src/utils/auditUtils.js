@@ -1,13 +1,15 @@
 //auditUtils.js
 import { executeQuery } from './dbUtils.js';
 
-export async function insertAuditoria(usuarioId, operacion, tablaAfectada, oldValues, newValues, ipCliente) {
+export async function insertAuditoria(usuarioId, rolId, ruta, method, body, ipCliente) {
     try {
         const query = `
-            INSERT INTO auditorias (usuario_id, operacion, tabla_afectada, old_values, new_values, ip_cliente)
+            INSERT INTO auditorias (usuario_id, rol_id, ruta, method, body, ip_cliente)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
-        const params = [usuarioId, operacion, tablaAfectada, oldValues, newValues, ipCliente];
+
+        const params = [usuarioId, rolId, ruta, method, body, ipCliente];
+
         await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
         console.log('Auditoría registrada correctamente');
     } catch (error) {

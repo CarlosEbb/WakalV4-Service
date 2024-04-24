@@ -18,7 +18,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Habilitar CORS para todas las rutas
-app.use(cors());
+// Configuración de CORS
+app.use(cors({
+    origin: ['http://localhost:4321'],
+    methods: ['GET', 'POST', 'DELETE', 'PUT'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Hacer que la carpeta 'uploads' sea pública
+app.use('/uploads', express.static('uploads'));
 
 // Middleware para establecer encabezados de tipo de contenido
 app.use((req, res, next) => {
@@ -53,6 +61,7 @@ app.use('/consultas', consultaRoutes);
 // Rutas para consultas de totales
 app.use('/totalData', totalDataRoutes);
 
+
 // Middleware para manejo de errores
 app.use((err, req, res, next) => {
     console.error('Error no controlado:', err.message);
@@ -61,11 +70,6 @@ app.use((err, req, res, next) => {
     res.status(500).json(jsonResponse);
 });
 
-app.use(cors({
-    origin: ['http://localhost:4321'],
-    methods: ['GET', 'POST', 'DELETE', 'PUT'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
 
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
