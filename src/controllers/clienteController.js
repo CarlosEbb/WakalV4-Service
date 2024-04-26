@@ -2,6 +2,7 @@
 
 import Cliente from '../models/cliente.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
+import { limpiarObjeto, saveImage, deleteImage } from '../utils/tools.js';
 import Joi from 'joi';
 
 // Controlador para obtener todos los clientes
@@ -37,16 +38,19 @@ export const createClienteSchema = Joi.object({
     nombre_cliente: Joi.string().max(50).required(),
     connections: Joi.string().max(20).allow(null),
     logo: Joi.string().max(255).allow(null),
-});
+}).unknown();
 
 // Controlador para crear un nuevo cliente
 export const createCliente = async (req, res) => {
+    const imagen = req.file;
+    delete req.body.logo;
     try {
         // Validar los datos de entrada con Joi
         const { error, value } = createClienteSchema.validate(req.body, { abortEarly: false });
         if (error) {
             const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
+            req.body.logo = imagen ? deleteImage(imagen) : null;
             return res.status(400).json(jsonResponse);
         }
 
@@ -56,23 +60,27 @@ export const createCliente = async (req, res) => {
         if (existingClient.exists) {
             if (existingClient.deleted) {
                 // Actualizar el cliente existente con los nuevos datos
-                const enabled = 1;
-                await Cliente.updateFields(existingClient.clientId, { rif, nombre_cliente, connections, logo, enabled });
+                req.body.enabled = 1;
+                req.body.logo = imagen ? saveImage(imagen) : null;
+                await Cliente.updateFields(existingClient.clientId, req.body);
                 const jsonResponse = createJSONResponse(200, 'Cliente actualizado correctamente', { clienteId: existingClient.clientId });
                 return res.status(200).json(jsonResponse);
             } else {
                 const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El RIF ya está registrado'] });
+                req.body.logo = imagen ? deleteImage(imagen) : null;
                 return res.status(400).json(jsonResponse);
             }
         }
 
         // Si el RIF no está registrado o está eliminado, proceder con la creación del cliente
-        const newClienteId = await Cliente.create({ rif, nombre_cliente, connections, logo });
+        req.body.logo = imagen ? saveImage(imagen) : null;
+        const newClienteId = await Cliente.create(req.body);
         const jsonResponse = createJSONResponse(201, 'Cliente creado correctamente', { clienteId: newClienteId });
         return res.status(201).json(jsonResponse);
     } catch (error) {
         console.error('Error al crear un nuevo cliente:', error);
         const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        req.body.logo = imagen ? deleteImage(imagen) : null;
         return res.status(500).json(jsonResponse);
     }
 };
@@ -102,10 +110,11 @@ export const updateClienteSchema = Joi.object({
     nombre_cliente: Joi.string().min(2).max(50),
     connections: Joi.string().min(2).max(20).allow(null),
     logo: Joi.string().min(2).max(255).allow(null),
-});
+}).unknown();
 
 // Controlador para actualizar un cliente por su ID
 export const updateCliente = async (req, res) => {
+    const imagen = req.file;
     try {
         const clienteId = req.params.id;
         const fieldsToUpdate = req.body;
@@ -113,6 +122,7 @@ export const updateCliente = async (req, res) => {
         // Validar que no se envíe un objeto vacío en el cuerpo de la solicitud
         if (Object.keys(fieldsToUpdate).length === 0) {
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El cuerpo de la solicitud no puede estar vacío'] });
+            fieldsToUpdate.logo = imagen ? deleteImage(imagen) : null;
             return res.status(400).json(jsonResponse);
         }
 
@@ -121,29 +131,34 @@ export const updateCliente = async (req, res) => {
         if (error) {
             const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
+            fieldsToUpdate.logo = imagen ? deleteImage(imagen) : null;
             return res.status(400).json(jsonResponse);
         }
 
         // Verificar si el RIF está siendo actualizado y si pertenece al cliente que se está actualizando
-        if (fieldsToUpdate.hasOwnProperty('rif')) {
+        if ('rif' in fieldsToUpdate) {
             const clientRif = fieldsToUpdate.rif;
             const existingClient = await Cliente.findByRif(clientRif);
             if (existingClient) {
                 if (existingClient.id != clienteId) {
                     // El RIF pertenece a otro cliente, no se puede actualizar
                     const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['El RIF pertenece a otro cliente'] });
+                    fieldsToUpdate.logo = imagen ? deleteImage(imagen) : null;
                     return res.status(400).json(jsonResponse);
                 }
             }
         }
 
         // Si pasa todas las validaciones, actualizar el cliente
-        await Cliente.updateFields(clienteId, fieldsToUpdate);
+        fieldsToUpdate.logo = imagen ? saveImage(imagen) : null;
+        console.log('aquiii', limpiarObjeto(fieldsToUpdate))
+        await Cliente.updateFields(clienteId, limpiarObjeto(fieldsToUpdate));
         const jsonResponse = createJSONResponse(200, 'Cliente actualizado correctamente', {});
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al actualizar el cliente:', error);
         const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        fieldsToUpdate.logo = imagen ? deleteImage(imagen) : null;
         return res.status(500).json(jsonResponse);
     }
 };

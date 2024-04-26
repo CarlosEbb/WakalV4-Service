@@ -1,6 +1,8 @@
 //userController.js
 
 import User from '../models/user.js';
+import Cliente from '../models/cliente.js';
+import UserCliente from '../models/userCliente.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
 import { limpiarObjeto, saveImage, deleteImage } from '../utils/tools.js';
 import Joi from 'joi';
@@ -105,15 +107,32 @@ export const createUsuario = async (req, res) => {
         }
 
         if(req.user.rol_id !== 1){
-            req.body.registered_by_user_id = req.user.id;
+            req.body.registered_by_user_id = registered_by_user_id;
             req.body.rol_id = req.user.rol_id;
         }
+
+       
         // Si el correo electrónico no está registrado, proceder con la creación del usuario
         
         
         req.body.img_profile = imagen ? saveImage(imagen) : null;
         
         const newUserId = await User.create(req.body);
+
+        
+        if(req.user.rol_id == 1){
+            if(req.body.rol_id == 3){//si el usuario que registras es tipo cliente
+                if(req.body.cliente_id !== undefined && req.body.cliente_id !== null && req.body.cliente_id !== "") {//cliente nuevo
+                    //vincular a cliente existente
+                    await UserCliente.create({"user_id": newUserId, "cliente_id": req.body.cliente_id})
+                }
+            }
+        }
+        if(req.user.rol_id == 3){
+            const userCliente = await User.findById(registered_by_user_id);
+            console.log(userCliente);
+            await UserCliente.create({"user_id": newUserId, "cliente_id": userCliente.cliente_id})
+        }
 
         const jsonResponse = createJSONResponse(200, 'Usuario creado correctamente', { userId: newUserId });
         return res.status(201).json(jsonResponse);
@@ -179,7 +198,7 @@ export const updateUser = async (req, res) => {
 
         // Si pasa todas las validaciones, actualizar el usuario
         fieldsToUpdate.img_profile = imagen ? saveImage(imagen) : null;
-        await User.updateFields(userId, await limpiarObjeto(fieldsToUpdate));
+        await User.updateFields(userId, limpiarObjeto(fieldsToUpdate));
         const jsonResponse = createJSONResponse(200, 'Usuario actualizado correctamente', {});
         return res.status(200).json(jsonResponse);
     } catch (error) {

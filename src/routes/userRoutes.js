@@ -8,7 +8,7 @@ import checkRolePermissions from '../middlewares/checkRolePermissions.js';
 import auditMiddleware from '../middlewares/auditMiddleware.js';
 
 // Configura multer para almacenar archivos
-const upload = multer({ dest: './uploads/' });
+const upload = multer({ dest: './uploads/img_perfil/' });
 
 // Ruta para obtener todos los usuarios
 router.get('/', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getAllUsers);

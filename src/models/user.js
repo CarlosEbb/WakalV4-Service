@@ -40,6 +40,7 @@ export default class User {
             this.nombre_cliente = data.nombre_cliente;
             this.logo = data.logo;
             this.rif = data.rif;
+            //this.connections = data.connections;
         }
 
     }
@@ -51,9 +52,11 @@ export default class User {
     // Método estático para buscar un usuario por su ID que no haya sido eliminado lógicamente
     static async findById(userId) {
         const query = `
-            SELECT u.*, r.nombre AS nombre_rol
+            SELECT u.*, r.nombre AS nombre_rol, c.*, c.id as cliente_id,  u.id as id, u.enabled as enabled, u.created_at as created_at, u.updated_at as updated_at
             FROM usuarios u
             LEFT JOIN roles r ON u.rol_id = r.id
+            LEFT JOIN usuarios_clientes uc ON u.id = uc.user_id
+            LEFT JOIN clientes c ON uc.cliente_id = c.id
             WHERE u.id = ? AND u.enabled = 1
         `;
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [userId]);
@@ -110,7 +113,7 @@ export default class User {
                 SELECT u.*, r.nombre AS nombre_rol
                 FROM usuarios u
                 LEFT JOIN roles r ON u.rol_id = r.id
-                WHERE u.enabled = 1
+                WHERE u.enabled = 1 order by u.id
             `;
             let params = [];
     
@@ -149,12 +152,38 @@ export default class User {
         }
     }
 
+    static async usernameExists(username) {
+        try {
+            const query = `
+                SELECT id, enabled
+                FROM usuarios
+                WHERE username = ?;
+            `;
+            const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [username]);
+            if (result && result.length > 0) {
+                const user = result[0];
+                if (user.enabled == 1) {
+                    return { exists: true, deleted: false, userId: user.id }; // Si el usuario está habilitado, devolver el ID del usuario
+                } else {
+                    return { exists: true, deleted: true, userId: user.id }; // Si el usuario está marcado como eliminado, devolver un objeto indicando que existe pero está eliminado, junto con el ID del usuario
+                }
+            }
+            return { exists: false }; // Si no se encuentra ningún registro, devolver un objeto indicando que no existe
+        } catch (error) {
+            console.error('Error al verificar si el username existe:', error);
+            throw error;
+        }
+    }
+
     // Método estático para crear un usuario
     static async create(data) {
         try {
             const insertQuery = `
-                INSERT INTO usuarios (email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, registered_by_user_id, enabled, email_alternativo, img_profile, department, username, telefono, jurisdiccion_estado, jurisdiccion_region, jurisdiccion_sector, cargo, cod_area)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                BEGIN
+                    INSERT INTO usuarios (email, password, rol_id, nombre, apellido, prefijo_cedula, cedula, access_expiration, registered_by_user_id, enabled, email_alternativo, img_profile, department, username, telefono, jurisdiccion_estado, jurisdiccion_region, jurisdiccion_sector, cargo, cod_area)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    SELECT @@IDENTITY AS 'ID';
+                END;
             `;
             
             // Hashear la contraseña antes de almacenarla en la base de datos
@@ -185,7 +214,7 @@ export default class User {
             
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, insertQuery, insertParams);
             console.log('Usuario creado correctamente');
-            return result.insertId; // Retorna el ID del nuevo usuario creado
+            return String(result[0].ID); // Retorna el ID del nuevo usuario creado
         } catch (error) {
             console.error('Error al crear un nuevo usuario:', error);
             throw error;

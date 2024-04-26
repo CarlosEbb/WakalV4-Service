@@ -2,7 +2,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 
 
-export async function limpiarObjeto(obj) {
+export function limpiarObjeto(obj) {
     Object.keys(obj).forEach(key => 
         (obj[key] === null || obj[key] === '') && delete obj[key]
       );

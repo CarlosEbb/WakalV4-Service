@@ -62,10 +62,14 @@ export default class Cliente {
 
     // Método para crear un nuevo cliente
     static async create(data) {
+        console.log(data);
         try {
             const insertQuery = `
+            BEGIN
                 INSERT INTO clientes (rif, nombre_cliente, connections, logo)
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?, ?);
+                SELECT @@IDENTITY AS 'ID';
+            END;
             `;
             const insertParams = [
                 data.rif,
@@ -74,7 +78,7 @@ export default class Cliente {
                 data.logo || null
             ];
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, insertQuery, insertParams);
-            return result.insertId;
+            return String(result[0].ID); // Retorna el ID del nuevo cliente creado
         } catch (error) {
             console.error('Error al crear un nuevo cliente:', error);
             throw error;
@@ -84,7 +88,7 @@ export default class Cliente {
     // Método para obtener todos los clientes que no han sido eliminados lógicamente
     static async getAll() {
         try {
-            const query = 'SELECT * FROM clientes WHERE enabled = 1';
+            const query = 'SELECT * FROM clientes WHERE enabled = 1 order by id';
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
             return result;
         } catch (error) {
@@ -155,7 +159,9 @@ export default class Cliente {
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}
                 WHERE id = ?
             `;
+            console.log(updateQuery);
             const updateParams = [...Object.values(fieldsToUpdate), clienteId];
+            console.log(updateParams);
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
     
             console.log('Campos actualizados correctamente');
