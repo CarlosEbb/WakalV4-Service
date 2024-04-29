@@ -15,14 +15,19 @@ export default class Rol {
             FROM roles
         `;
         let params = [];
-
+    
         // Si se proporciona un usuario, filtra los roles según el rol del usuario
         if (user !== null) {
             query += ' WHERE id = ?';
             params.push(user.rol_id);
         }
-
+    
         const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
-        return result;
+    
+        // Mapea cada objeto de resultado a una nueva instancia de Rol
+        const roles = result.map(rolData => new Rol(rolData));
+    
+        return roles;
     }
+    
 }

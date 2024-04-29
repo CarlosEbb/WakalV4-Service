@@ -8,9 +8,11 @@ import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import rolRoutes from './routes/rolRoutes.js';
+import auditoriasRoutes from './routes/auditoriasRoutes.js';
 import clienteRoutes from './routes/clienteRoutes.js';
 import consultaRoutes from './routes/consultaRoutes.js';
 import totalDataRoutes from './routes/totalDataRoutes.js';
+import consultasClienteRoutes from './routes/consultasClienteRoutes.js';
 
 import {createJSONResponse} from './utils/responseUtils.js';
 
@@ -52,6 +54,9 @@ app.use('/usuarios', userRoutes);
 // Rutas de Roles
 app.use('/roles', rolRoutes);
 
+// Rutas de Auditorias
+app.use('/auditorias', auditoriasRoutes);
+
 // Rutas de clientes
 app.use('/clientes', clienteRoutes);
 
@@ -61,6 +66,8 @@ app.use('/consultas', consultaRoutes);
 // Rutas para consultas de totales
 app.use('/totalData', totalDataRoutes);
 
+// Rutas para consultas de cliente
+app.use('/consultasCliente', consultasClienteRoutes);
 
 // Middleware para manejo de errores
 app.use((err, req, res, next) => {

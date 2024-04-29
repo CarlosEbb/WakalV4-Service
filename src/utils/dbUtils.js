@@ -28,6 +28,18 @@ export async function executeQuery(DSN, query, params) {
   }
 }
 
+export async function prepareQueryforClient(select, from, where = null) {
+  let query = `
+      SELECT ${select}
+      FROM ${from}
+  `;
+
+  if (where !== null) {
+      query += `WHERE ${where}`;
+  }
+  return query;
+}
+
 
 export async function validateConnection(DSN) {
   let connection;
