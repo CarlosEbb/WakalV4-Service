@@ -1,5 +1,5 @@
 import { executeQuery, prepareQueryforClient } from '../utils/dbUtils.js';
-import { obtenerFechasDelMes, obtenerNombreDelMes } from '../utils/tools.js';
+import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes } from '../utils/tools.js';
 
 export default class ConsultasCliente {
     constructor(cliente) {
@@ -31,9 +31,7 @@ export default class ConsultasCliente {
         let nombreDelMes = obtenerNombreDelMes(month);
         
         let fechas = obtenerFechasDelMes(year, month, 'YYYY-MM-DD');
-        if(this.cliente.name_bd_column_fecha_asignacion_format != "YYYY-MM-DD"){
-            console.log('es diferente la fecha')
-        }
+
         let query = await prepareQueryforClient(
             "count(*) as total", 
             this.cliente.name_bd_table.replace('{{Mes}}', nombreDelMes), 
@@ -41,6 +39,24 @@ export default class ConsultasCliente {
         );
 
         let params = [fechas.fechaInicial, fechas.fechaFinal];
+        const result = await executeQuery(this.cliente.connections, query, params);
+
+        return result[0];
+    }
+
+    async getTotalSemanal(year, month) {
+        let params = [];
+        let nombreDelMes = obtenerNombreDelMes(month);
+        const semanasDelMes = obtenerSemanasDelMes(year, month);
+        console.log(semanasDelMes);
+        let query = "SELECT ";
+       
+        semanasDelMes.forEach(semana => {
+          query += `SUM(CASE WHEN ${this.cliente.name_bd_column_fecha_asignacion} BETWEEN '${semana.inicio}' AND '${semana.fin}' THEN 1 ELSE 0 END) AS semana_${semana.inicio.replace(/-/g, '_')}, `;
+        });
+        query = query.slice(0, -2); // Eliminar los últimos dos caracteres
+        query += ` FROM ${this.cliente.name_bd_table.replace('{{Mes}}', nombreDelMes)}`;
+
         const result = await executeQuery(this.cliente.connections, query, params);
 
         return result[0];

@@ -58,3 +58,34 @@ export function deleteImage(file) {
         });
     }
 }
+
+
+// Función para obtener las semanas del mes
+export function obtenerSemanasDelMes(year, month) {
+    const fecha = new Date(year, month-1);
+    const semanas = [];
+    const primerDia = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+    const ultimoDia = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
+  
+    let inicioSemana = new Date(primerDia);
+  
+    
+    while (inicioSemana <= ultimoDia) {
+      let finSemana = new Date(inicioSemana);
+      
+      finSemana.setDate(inicioSemana.getDate() + (6 - inicioSemana.getDay()) + 1); // Obtener el próximo domingo
+  
+      if (finSemana > ultimoDia) {
+        finSemana = ultimoDia;
+      }
+  
+      semanas.push({
+        inicio: inicioSemana.toISOString().split('T')[0],
+        fin: finSemana.toISOString().split('T')[0]
+      });
+  
+      inicioSemana.setDate(finSemana.getDate() + 1); // Avanzar al próximo día después del fin de semana
+    }
+  
+    return semanas;
+}
