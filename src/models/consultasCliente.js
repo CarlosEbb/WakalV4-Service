@@ -7,15 +7,25 @@ export default class ConsultasCliente {
     }
 
     async getTotalEmitidos() {
-
-        let query = await prepareQueryforClient("count(*) as total", this.cliente.name_bd_table);
-
+        let tabla = this.cliente.name_bd_table;
+        let from = '';
+        let meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        
+        if (tabla.includes('{{Mes}}')) {
+            let consultas = meses.map(mes => `select count(*) as t from ${tabla.replace('{{Mes}}', mes)}`);
+            from = `(${consultas.join(' union all \n')}) as subquery`;
+        } else {
+            from = `(select count(*) as t from ${tabla}) as subquery`;
+        }
+        
+        let query = await prepareQueryforClient("SUM(t) as total", from);
         let params = [];
-
+        
         const result = await executeQuery(this.cliente.connections, query, params);
         
         return result[0];
     }
+    
 
     async getTotalMes(year, month) {
         let nombreDelMes = obtenerNombreDelMes(month);
@@ -31,8 +41,6 @@ export default class ConsultasCliente {
         );
 
         let params = [fechas.fechaInicial, fechas.fechaFinal];
-        console.log(query);
-        console.log(params);
         const result = await executeQuery(this.cliente.connections, query, params);
 
         return result[0];

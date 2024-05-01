@@ -113,7 +113,7 @@ export default class User {
                 SELECT u.*, r.nombre AS nombre_rol
                 FROM usuarios u
                 LEFT JOIN roles r ON u.rol_id = r.id
-                WHERE u.enabled = 1 order by u.id
+                WHERE u.enabled = 1
             `;
             let params = [];
     
@@ -122,7 +122,9 @@ export default class User {
                 params.push(user.rol_id);
                 params.push(user.id);
             }
-            
+
+            query += ' order by u.id';
+
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
             return result;
     }

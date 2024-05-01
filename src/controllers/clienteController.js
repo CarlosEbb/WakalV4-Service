@@ -36,7 +36,7 @@ export const getAllClientesWithConnectionStatus = async (req, res) => {
 export const createClienteSchema = Joi.object({
     rif: Joi.string().max(20).required(),
     nombre_cliente: Joi.string().max(50).required(),
-    connections: Joi.string().max(20).allow(null),
+    connections: Joi.string().max(255).allow(null),
     logo: Joi.string().max(255).allow(null),
 }).unknown();
 
@@ -108,7 +108,7 @@ export const getClienteById = async (req, res) => {
 export const updateClienteSchema = Joi.object({
     rif: Joi.string().min(2).max(20),
     nombre_cliente: Joi.string().min(2).max(50),
-    connections: Joi.string().min(2).max(20).allow(null),
+    connections: Joi.string().min(2).max(255).allow(null),
     logo: Joi.string().min(2).max(255).allow(null),
 }).unknown();
 

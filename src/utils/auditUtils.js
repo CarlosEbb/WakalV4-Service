@@ -11,7 +11,7 @@ export async function insertAuditoria(usuarioId, rolId, ruta, method, body, ipCl
         const params = [usuarioId, rolId, ruta, method, body, ipCliente];
 
         await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
-        console.log('Auditoría registrada correctamente');
+        console.log('Auditoría registrada correctamente', ruta);
     } catch (error) {
         console.error('Error al insertar auditoría:', error);
         throw error;
