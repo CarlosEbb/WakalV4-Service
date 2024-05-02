@@ -239,7 +239,6 @@ export default class User {
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}
                 WHERE id = ?
             `;
-           
             const updateParams = [...Object.values(fieldsToUpdate), userId];
              
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);

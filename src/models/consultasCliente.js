@@ -52,7 +52,7 @@ export default class ConsultasCliente {
         let query = "SELECT ";
        
         semanasDelMes.forEach(semana => {
-          query += `SUM(CASE WHEN ${this.cliente.name_bd_column_fecha_asignacion} BETWEEN '${semana.inicio}' AND '${semana.fin}' THEN 1 ELSE 0 END) AS semana_${semana.inicio.replace(/-/g, '_')}, `;
+          query += `SUM(CASE WHEN ${this.cliente.name_bd_column_fecha_asignacion} BETWEEN '${semana.inicio}' AND '${semana.fin}' THEN 1 ELSE 0 END) AS '${semana.inicio.replace(year+"-"+month+"-",'')}~${semana.fin.replace(year+"-"+month+"-",'')}', `;
         });
         query = query.slice(0, -2); // Eliminar los últimos dos caracteres
         query += ` FROM ${this.cliente.name_bd_table.replace('{{Mes}}', nombreDelMes)}`;
