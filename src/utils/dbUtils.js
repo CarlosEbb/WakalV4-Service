@@ -5,7 +5,7 @@ export async function executeQuery(DSN, query, params) {
   let connection;
   try {
     // Establece la conexión utilizando el DSN proporcionado
-    connection = await odbc.connect(`DSN=${DSN}`);
+    connection = await odbc.connect(`DSN=${DSN};CHARSET=UTF8;`);
 
     // Ejecuta la consulta con los parámetros proporcionados
     const result = await connection.query(query, params);
