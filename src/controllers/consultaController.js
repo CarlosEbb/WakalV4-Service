@@ -1,5 +1,5 @@
-import TipoConsulta from '../models/tipoConsulta.js';
-import ParametrosConsulta from '../models/parametrosConsulta.js';
+import Consulta from '../models/Consulta.js';
+import ConsultaParametros from '../models/ConsultaParametros.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
 
 // Controlador para obtener todas las consultas de un cliente
@@ -7,9 +7,8 @@ export const getAllConsultasByCliente = async (req, res) => {
     try {
         // Obtener el ID del cliente desde la solicitud
         const clienteId = req.params.clienteId;
-
         // Obtener todas las consultas del cliente
-        const consultas = await TipoConsulta.findByClienteId(clienteId);
+        const consultas = await Consulta.findByClienteId(clienteId);
 
         // Verificar si se encontraron consultas
         if (consultas.length === 0) {
@@ -17,9 +16,9 @@ export const getAllConsultasByCliente = async (req, res) => {
             return res.status(404).json(jsonResponse);
         }
 
-        // Iterar sobre las consultas y obtener los parámetros asociados a cada una
+        //Iterar sobre las consultas y obtener los parámetros asociados a cada una
         for (const consulta of consultas) {
-            consulta.parametros = await ParametrosConsulta.findByTipoConsultaId(consulta.id);
+            consulta.parametros = await ConsultaParametros.findByTipoConsultaId(consulta.id);
         }
 
         // Retornar las consultas con sus parámetros en el response
