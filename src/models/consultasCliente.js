@@ -74,6 +74,10 @@ export default class ConsultasCliente {
         let numero_control_nameParamBD = this.cliente.name_bd_column_numero_control;
         let numero_control_nameString = "numero_control";
 
+        let numero_documento;
+        let numero_documento_nameParamBD = this.cliente.name_bd_column_numero_documento;
+        let numero_documento_nameString = "numero_documento";
+
         let fecha_inicio;
         let fecha_final;
         let fecha_tipo;
@@ -88,6 +92,50 @@ export default class ConsultasCliente {
             numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
             params.push(numero_control - 10); params.push(numero_control + 10);
             whereClause = `${numero_control_nameParamBD} BETWEEN ? AND ?`;
+        }
+        if(queryParams.numero_documento){
+            let hasLetters = /[a-zA-Z]/.test(queryParams.numero_documento);
+            let hasHyphen = queryParams.numero_documento.includes('-');
+            console.log(hasLetters || hasHyphen || this.cliente.id == 4);
+            if(hasLetters || hasHyphen || this.cliente.id == 4){//si contiene letras
+                let simbolo = '-'; 
+
+                numero_documento = queryParams.numero_documento;
+                let partes = numero_documento.split(simbolo); // separa el prefijo y la parte numérica
+                
+                
+                if(!partes[1]){
+                    partes[1] = partes[0];
+                    partes[0] = "";
+                    simbolo = "";
+                }
+                
+                let prefijo = partes[0];
+                let numero = parseInt(partes[1]);
+
+                let digitos = partes[1].length; // obtiene la cantidad de dígitos
+
+                let inicio = numero - 10; // inicio del rango
+                let fin = numero + 10; // fin del rango
+
+                // Limpia params y agrega todos los valores en el rango al array
+                params = [];
+                for (let i = inicio; i <= fin; i++) {
+                    let doc = prefijo + simbolo + String(i).padStart(digitos, '0');
+                    params.push(doc);
+                }
+
+                // Genera los signos de interrogación para la cláusula IN
+                let placeholders = params.map(() => '?').join(',');
+
+                // Construye la cláusula WHERE
+                whereClause = `${numero_documento_nameParamBD} IN (${placeholders})`;
+
+            }else{//solo son numeros
+                numero_documento = Number(queryParams.numero_documento.replace(/-/g, '').replace(/^0+/, ''));
+                params.push(numero_documento - 10); params.push(numero_documento + 10);
+                whereClause = `${numero_documento_nameParamBD} BETWEEN ? AND ?`;
+            }
         }
 
         if(queryParams.tipo_fecha && queryParams.fecha_inicio && queryParams.fecha_final){
@@ -107,6 +155,7 @@ export default class ConsultasCliente {
         }
     
         let query = `SELECT ${numero_control_nameParamBD} as ${numero_control_nameString},
+                            ${numero_documento_nameParamBD} as ${numero_documento_nameString},
                             ${fecha_emision_nameParamBD} as ${fecha_emision_nameString},
                             ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString}
                      FROM ${tabla}
