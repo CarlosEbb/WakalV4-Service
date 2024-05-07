@@ -22,7 +22,8 @@ export default class Consulta {
             //     WHERE c.cliente_id = ?;
             // `;
             const query = `
-                SELECT * FROM consultas
+                SELECT id, nombre, cliente_id
+                FROM consultas
                 WHERE cliente_id = ?;
             `;
 

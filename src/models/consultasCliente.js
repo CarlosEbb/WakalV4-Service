@@ -48,7 +48,6 @@ export default class ConsultasCliente {
         let params = [];
         let nombreDelMes = obtenerNombreDelMes(month);
         const semanasDelMes = obtenerSemanasDelMes(year, month);
-        console.log(semanasDelMes);
         let query = "SELECT ";
        
         semanasDelMes.forEach(semana => {
@@ -65,5 +64,60 @@ export default class ConsultasCliente {
     async getTotalCorreos() {
         return 1;
     }
+
+    async getDataBusqueda(queryParams) {
+        let params = [];
+        let whereClause = '';
+        let tabla = this.cliente.name_bd_table;
+
+        let numero_control;
+        let numero_control_nameParamBD = this.cliente.name_bd_column_numero_control;
+        let numero_control_nameString = "numero_control";
+
+        let fecha_inicio;
+        let fecha_final;
+        let fecha_tipo;
+
+        let fecha_emision_nameParamBD = this.cliente.name_bd_column_fecha_emision;
+        let fecha_emision_nameString = "fecha_emision";
+
+        let fecha_asignacion_nameParamBD = this.cliente.name_bd_column_fecha_asignacion;
+        let fecha_asignacion_nameString = "fecha_asignacion";
+        
+        if(queryParams.numero_control){
+            numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
+            params.push(numero_control - 10); params.push(numero_control + 10);
+            whereClause = `${numero_control_nameParamBD} BETWEEN ? AND ?`;
+        }
+
+        if(queryParams.tipo_fecha && queryParams.fecha_inicio && queryParams.fecha_final){
+            fecha_inicio = queryParams.fecha_inicio;
+            fecha_final = queryParams.fecha_final;
+            fecha_tipo = queryParams.tipo_fecha;
+            let fecha_selected;
+
+            if(fecha_tipo == "emision"){
+                fecha_selected = fecha_emision_nameParamBD;
+            }else if(fecha_tipo == "asignacion"){
+                fecha_selected = fecha_asignacion_nameParamBD;
+            }
+
+            params.push(fecha_inicio); params.push(fecha_final);
+            whereClause = `${fecha_selected} BETWEEN ? AND ?`;
+        }
+    
+        let query = `SELECT ${numero_control_nameParamBD} as ${numero_control_nameString},
+                            ${fecha_emision_nameParamBD} as ${fecha_emision_nameString},
+                            ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString}
+                     FROM ${tabla}
+                     WHERE ${whereClause}
+                     ORDER BY ${numero_control_nameParamBD}`;
+        console.log(query, params);
+        const result = await executeQuery(this.cliente.connections, query, params);
+
+        return result;
+    }
+    
+    
     
 }

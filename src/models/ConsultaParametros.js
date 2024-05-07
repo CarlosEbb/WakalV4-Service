@@ -17,7 +17,7 @@ export default class ConsultaParametros {
     static async findByTipoConsultaId(tipoConsultasId) {
         try {
             const query = `
-                SELECT p.*
+                SELECT p.id, p.name, p.tipo_input, p.placeholder, p.column_reference_cliente
                 FROM consultas_parametros AS cp
                 JOIN parametros AS p ON cp.parametro_id = p.id
                 WHERE consulta_id = ?;

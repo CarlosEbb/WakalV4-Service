@@ -81,16 +81,30 @@ export const getTotalEmitidosSemanal = async (req, res) => {
     }
 };
 
-// export const getTotalCorreos = async (req, res) => {
-//     try {
-       
-//         const jsonResponse = createJSONResponse(200, 'Correos emitidos obtenidos correctamente', []);
-//         return res.status(200).json(jsonResponse);
-//     } catch (error) {
-//         console.error('Error al obtener Totales Emitidos:', error);
-//         const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
-//         return res.status(500).json(jsonResponse);
-//     }
-// };
+
+//metodo para obtener total emitidos por mes, separado por semanas
+export const getDataBusqueda = async (req, res) => {
+  try {
+      let cliente;
+      const rol_id = req.user.rol_id;
+      const cliente_id = req.params.cliente_id;
+      if (rol_id === 1 || rol_id === 2) {
+        cliente = await Cliente.findById(cliente_id);
+      } else {
+        const user = await User.findById(req.user.id);
+        cliente = await Cliente.findById(user.cliente_id);          
+      }
+
+      const consulta = new ConsultasCliente(cliente);
+      const dataControl = await consulta.getDataBusqueda(req.query);
+
+      const jsonResponse = createJSONResponse(200, 'Nro control obtenido correctamente', dataControl);
+      return res.status(200).json(jsonResponse);
+  } catch (error) {
+      console.error('Error al obtener Nro control:', error);
+      const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+      return res.status(500).json(jsonResponse);
+  }
+};
 
 
