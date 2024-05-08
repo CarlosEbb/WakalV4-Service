@@ -89,3 +89,24 @@ export function obtenerSemanasDelMes(year, month) {
   
     return semanas;
 }
+
+export function codificar(cadena) {
+    let encriptado = "";
+    let num = 0;
+    const abecedario = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U",
+        "V","W","X","Y","Z","1","2","3","4","5","6","7","8","9","0"];
+    let valorRandom = 0;   
+
+    for (let x = 0; x < cadena.length; x++) {
+        num = Math.floor(Math.random() * 9) + 1; // número aleatorio entre 1 y 9
+        encriptado += num.toString();
+
+        for (let y = 0; y < num; y++) {
+            valorRandom = Math.floor(Math.random() * 35); // valor aleatorio del arreglo abecedario
+            encriptado += abecedario[valorRandom];
+        }
+        encriptado += cadena[x];
+    }       
+
+    return encriptado;       
+}

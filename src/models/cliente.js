@@ -7,13 +7,20 @@ export default class Cliente {
         this.id = data.id;
         this.rif = data.rif;
         this.nombre_cliente = data.nombre_cliente;
+        this.is_prod = data.is_prod || null;
         this.connections = data.connections || null;
+
         this.logo = data.logo || null;
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
-
         this.enabled = data.enabled || null;
+
+        this.url_prod = data.url_prod || null;
+        this.url_qa = data.url_qa || null;
+
         this.name_bd_table = data.name_bd_table || null;
+        this.name_bd_table_coletilla = data.name_bd_table_coletilla || null;
+
         this.name_bd_column_numero_control = data.name_bd_column_numero_control || null;
         this.name_bd_column_fecha_emision = data.name_bd_column_fecha_emision || null;
         this.name_bd_column_fecha_emision_format = data.name_bd_column_fecha_emision_format || null;

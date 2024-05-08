@@ -1,5 +1,5 @@
 import { executeQuery, prepareQueryforClient } from '../utils/dbUtils.js';
-import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes } from '../utils/tools.js';
+import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes, codificar } from '../utils/tools.js';
 
 export default class ConsultasCliente {
     constructor(cliente) {
@@ -66,9 +66,58 @@ export default class ConsultasCliente {
     }
 
     async getDataBusqueda(queryParams) {
+        
         let params = [];
+        
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
+        let url_documento;
+        let encrypt;
+
+        // const clave = codificar('FACT00-00192253');
+        // const encrypt = Buffer.from(clave).toString('base64');
+        if(this.cliente.is_prod == 1){
+            url_documento = `'${this.cliente.url_prod}'`;
+        }else{
+            url_documento = `'${this.cliente.url_qa}'`;
+        }
+        
+        if(this.cliente.name_bd_table_coletilla != null){
+            let params_coletilla = [];
+            let queryPart = '';
+            if (queryParams.numero_control) {
+                params_coletilla.push(queryParams.numero_control);
+                queryPart = `? BETWEEN rangoInicial AND rangoFinal`;
+            }
+        
+            if (queryParams.numero_documento) {
+                if (queryPart !== '') {
+                    queryPart += ' OR ';
+                }
+                params_coletilla.push(queryParams.numero_documento);
+                params_coletilla.push(queryParams.numero_documento);
+                params_coletilla.push(queryParams.numero_documento);
+                queryPart += `? BETWEEN rangoInicalFac AND rangoFinalFac OR `;
+                queryPart += `? BETWEEN rangoInicalNC AND rangoFinalNC OR `;
+                queryPart += `? BETWEEN rangoInicalND AND rangoFinalND`;
+            }
+
+            let query_coletilla = `
+                SELECT 
+                    mesCarga as numero_mes
+                FROM coletilla
+                ${queryPart !== '' ? 'WHERE ' + queryPart : ''}
+            `;
+
+            const result_coletilla = await executeQuery(this.cliente.connections, query_coletilla, params_coletilla);
+            let data_coletilla = result_coletilla[0]?.numero_mes;
+            if(!data_coletilla){
+                return null;
+            }
+            if (tabla.includes('{{Mes}}')) {
+                tabla = tabla.replace('{{Mes}}',obtenerNombreDelMes(data_coletilla));
+            }
+        }
 
         let numero_control;
         let numero_control_nameParamBD = this.cliente.name_bd_column_numero_control;
@@ -91,7 +140,10 @@ export default class ConsultasCliente {
         if(queryParams.numero_control){
             numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
             params.push(numero_control - 10); params.push(numero_control + 10);
-            whereClause = `${numero_control_nameParamBD} BETWEEN ? AND ?`;
+            if (whereClause !== '') {
+                whereClause += ' OR ';
+            }
+            whereClause += `${numero_control_nameParamBD} BETWEEN ? AND ?`;
         }
         if(queryParams.numero_documento){
             let hasLetters = /[a-zA-Z]/.test(queryParams.numero_documento);
@@ -129,12 +181,18 @@ export default class ConsultasCliente {
                 let placeholders = params.map(() => '?').join(',');
 
                 // Construye la cláusula WHERE
-                whereClause = `${numero_documento_nameParamBD} IN (${placeholders})`;
+                if (whereClause !== '') {
+                    whereClause += ' OR ';
+                }
+                whereClause += `${numero_documento_nameParamBD} IN (${placeholders})`;
 
             }else{//solo son numeros
                 numero_documento = Number(queryParams.numero_documento.replace(/-/g, '').replace(/^0+/, ''));
                 params.push(numero_documento - 10); params.push(numero_documento + 10);
-                whereClause = `${numero_documento_nameParamBD} BETWEEN ? AND ?`;
+                if (whereClause !== '') {
+                    whereClause += ' OR ';
+                }
+                whereClause += `${numero_documento_nameParamBD} BETWEEN ? AND ?`;
             }
         }
 
@@ -157,11 +215,13 @@ export default class ConsultasCliente {
         let query = `SELECT ${numero_control_nameParamBD} as ${numero_control_nameString},
                             ${numero_documento_nameParamBD} as ${numero_documento_nameString},
                             ${fecha_emision_nameParamBD} as ${fecha_emision_nameString},
-                            ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString}
+                            ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString},
+                            ${url_documento} as url_documento
                      FROM ${tabla}
                      WHERE ${whereClause}
                      ORDER BY ${numero_control_nameParamBD}`;
         console.log(query, params);
+        
         const result = await executeQuery(this.cliente.connections, query, params);
 
         return result;
