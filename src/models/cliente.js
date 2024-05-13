@@ -26,9 +26,11 @@ export default class Cliente {
         this.name_bd_column_fecha_emision_format = data.name_bd_column_fecha_emision_format || null;
         this.name_bd_column_fecha_asignacion = data.name_bd_column_fecha_asignacion || null;
         this.name_bd_column_fecha_asignacion_format = data.name_bd_column_fecha_asignacion_format || null;
-
         this.name_bd_column_numero_documento = data.name_bd_column_numero_documento || null;
         this.name_bd_column_numero_documento_format = data.name_bd_column_numero_documento_format || null;
+
+        this.name_bd_column_tipo_documento = data.name_bd_column_tipo_documento || null;
+        this.name_bd_column_tipo_documento_format = data.name_bd_column_tipo_documento_format || null;
     }
 
     // Método estático para buscar un cliente por su RIF
@@ -98,7 +100,7 @@ export default class Cliente {
     // Método para obtener todos los clientes que no han sido eliminados lógicamente
     static async getAll() {
         try {
-            const query = 'SELECT * FROM clientes WHERE enabled = 1 order by id';
+            const query = 'SELECT * FROM clientes WHERE enabled = 1 order by nombre_cliente';
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
             return result;
         } catch (error) {

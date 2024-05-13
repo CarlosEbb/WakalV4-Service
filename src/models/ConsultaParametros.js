@@ -9,8 +9,9 @@ export default class ConsultaParametros {
         this.tipo_input = tipo_input;
         this.placeholder = placeholder;
         this.column_reference_cliente = column_reference_cliente;
-        this.created_at = created_at;
-        this.updated_at = updated_at;
+        this.column_reference_cliente_value = null;
+        //this.created_at = created_at;
+        //this.updated_at = updated_at;
     }
 
     // Método estático para buscar todos los parámetros de una consulta por su ID de tipo de consulta
@@ -28,5 +29,9 @@ export default class ConsultaParametros {
             console.error('Error al buscar parámetros por ID de tipo de consulta:', error);
             throw error;
         }
+    }
+
+    static setColumnReferenceClienteValue(value) {
+       this.column_reference_cliente_value = value;
     }
 }

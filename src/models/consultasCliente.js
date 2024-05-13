@@ -127,6 +127,10 @@ export default class ConsultasCliente {
         let numero_documento_nameParamBD = this.cliente.name_bd_column_numero_documento;
         let numero_documento_nameString = "numero_documento";
 
+        let tipo_documento;
+        let tipo_documento_nameParamBD = this.cliente.name_bd_column_tipo_documento;
+        let tipo_documento_nameString = "tipo_documento";
+
         let fecha_inicio;
         let fecha_final;
         let fecha_tipo;
@@ -139,12 +143,26 @@ export default class ConsultasCliente {
         
         if(queryParams.numero_control){
             numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
-            params.push(numero_control - 10); params.push(numero_control + 10);
+            let cantidad_mostrar = 10;
+            if(queryParams.especifico_check){
+                cantidad_mostrar = 0;
+            }
+            params.push(numero_control - cantidad_mostrar); 
+            
+            if(!queryParams.especifico_check){
+                params.push(numero_control + cantidad_mostrar);
+            }
             if (whereClause !== '') {
                 whereClause += ' OR ';
             }
-            whereClause += `${numero_control_nameParamBD} BETWEEN ? AND ?`;
+
+            if(queryParams.especifico_check){
+                whereClause += `${numero_control_nameParamBD} = ?`;
+            }else{
+                whereClause += `${numero_control_nameParamBD} BETWEEN ? AND ?`;
+            }
         }
+        
         if(queryParams.numero_documento){
             let hasLetters = /[a-zA-Z]/.test(queryParams.numero_documento);
             let hasHyphen = queryParams.numero_documento.includes('-');
@@ -167,9 +185,14 @@ export default class ConsultasCliente {
 
                 let digitos = partes[1].length; // obtiene la cantidad de dígitos
 
-                let inicio = numero - 10; // inicio del rango
-                let fin = numero + 10; // fin del rango
+                let cantidad_mostrar = 10;
+                if(queryParams.especifico_check){
+                    cantidad_mostrar = 0;
+                }
+                let inicio = numero - cantidad_mostrar; // inicio del rango
+                let fin = numero + cantidad_mostrar; // fin del rango
 
+                
                 // Limpia params y agrega todos los valores en el rango al array
                 params = [];
                 for (let i = inicio; i <= fin; i++) {
@@ -209,14 +232,28 @@ export default class ConsultasCliente {
             }
 
             params.push(fecha_inicio); params.push(fecha_final);
-            whereClause = `${fecha_selected} BETWEEN ? AND ?`;
+            if (whereClause !== '') {
+                whereClause += ' AND ';
+            }
+            whereClause += `${fecha_selected} BETWEEN ? AND ?`;
+        }
+
+        if(queryParams.tipo_documento){
+            tipo_documento = queryParams.tipo_documento;
+            params.push(tipo_documento);
+            if (whereClause !== '') {
+                whereClause += ' AND ';
+            }
+            whereClause += `${tipo_documento_nameParamBD} = ?`;
         }
     
+        //${url_documento} as url_documento
         let query = `SELECT ${numero_control_nameParamBD} as ${numero_control_nameString},
                             ${numero_documento_nameParamBD} as ${numero_documento_nameString},
                             ${fecha_emision_nameParamBD} as ${fecha_emision_nameString},
                             ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString},
-                            ${url_documento} as url_documento
+                            ${tipo_documento_nameParamBD} as ${tipo_documento_nameString}
+                            
                      FROM ${tabla}
                      WHERE ${whereClause}
                      ORDER BY ${numero_control_nameParamBD}`;
