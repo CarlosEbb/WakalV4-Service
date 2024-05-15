@@ -4,6 +4,7 @@ import { createJSONResponse } from '../utils/responseUtils.js';
 import Cliente from '../models/cliente.js';
 import User from '../models/user.js';
 import { isTokenInvalid } from '../utils/tokenUtils.js';
+import { buscarValorInArray, aplicarFormatoNrocontrol, codificar } from '../utils/tools.js';
 import jwt from 'jsonwebtoken';
 
 // Controlador para obtener todas las consultas de un cliente
@@ -65,7 +66,6 @@ export const getConsultasPDF = async (req, res) => {
         // Verificar si el token es válido
         jwt.verify(token, 'secretKey', async (err, decoded) => {
             if (err) {
-                console.log(err);
                 // Si el token no es válido, devolver un error de token inválido
                 const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['¡Ups! El token que has introducido no es válido o ya ha sido utilizado'] });
                 return res.status(400).json(jsonResponse);
@@ -85,6 +85,7 @@ export const getConsultasPDF = async (req, res) => {
 
             let cliente;
             let url;
+           
             const rol_id = decoded.rol_id;
             const cliente_id = req.params.cliente_id;
             if (rol_id === 1 || rol_id === 2) {
@@ -93,12 +94,79 @@ export const getConsultasPDF = async (req, res) => {
                 cliente = await Cliente.findById(user.cliente_id);          
             }
             
-            if(cliente.is_prod == "1"){
-                url = cliente.url_prod;
-            }else{
-                url = cliente.url_qa;
+            
+            let array = JSON.parse(cliente.name_bd_column_tipo_documento_format).values;
+            console.log(array);
+            console.log(req.params.tipo_documento);
+            
+            let tipo_view_pdf = req.params.tipo_documento;
+            let control_view_pdf;
+            let encrypt;
+            let busqueda = buscarValorInArray(array, req.params.tipo_documento);
+            if(busqueda != null){
+                if(cliente.name_bd_column_tipo_documento_view_pdf_format != null){
+                    tipo_view_pdf = JSON.parse(cliente.name_bd_column_tipo_documento_view_pdf_format)[busqueda];
+                }
             }
-            res.redirect(url.replace("{{encrypt}}", "00-21415845"));
+            if(cliente.numero_control_view_pdf_format == 1){
+                if(cliente.id == 2 ){
+                    console.log("sdfsdffdsfsd");
+                    control_view_pdf = aplicarFormatoNrocontrol(req.params.numero_control,7);
+                }else{
+                    control_view_pdf = aplicarFormatoNrocontrol(req.params.numero_control);
+                }
+            }else{
+                control_view_pdf = req.params.numero_control;
+            }
+            
+          
+            encrypt = cliente.encrypt_url_format_order;
+            if(cliente.name_bd_column_encrypt != null){
+                if(req.params.encrypt){
+                    encrypt = req.params.encrypt;
+                    console.log('siiii',encrypt);
+                }
+            }
+            if(encrypt != null){
+
+                console.log(encrypt);
+                encrypt = encrypt.replace("{{tipo_documento}}", (tipo_view_pdf ? tipo_view_pdf : ""));
+                console.log(encrypt);
+                encrypt = encrypt.replace("{{numero_control}}", (control_view_pdf ? control_view_pdf : ""));
+                console.log(encrypt);
+                encrypt = encrypt.replace("{{numero_documento}}", (req.params.numero_documento ? req.params.numero_documento : ""));
+                console.log(encrypt);
+                encrypt = encrypt.replace("{{mes}}", (req.params.mes ? req.params.mes : ""));
+                console.log(encrypt);
+    
+                let funcionesAUsar = JSON.parse(cliente.encrypt_url_format);
+                console.log(encrypt);
+
+                if(funcionesAUsar != null){
+                    funcionesAUsar.forEach(funcion => {
+                        if (funcion === "base64") {
+                            encrypt = btoa(encrypt);
+                        } else if (funcion === "codificar") {
+                            encrypt = codificar(encrypt);
+                        }
+                    });
+                }
+    
+                if(cliente.is_prod == "1"){
+                    url = cliente.url_prod;
+                }else{
+                    url = cliente.url_qa;
+                }
+                url = url.replace("{{encrypt}}", encrypt);
+                
+                if(req.query.encrypt_others){
+                    url = url.replace("{{ruta_url}}", req.query.encrypt_others);
+                }
+                res.redirect(url);
+            }else{
+                const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error al contruir url PDF'] });
+                return res.status(500).json(jsonResponse);
+            }
         });
 
         

@@ -20,6 +20,16 @@ export function obtenerNombreDelMes(numeroDelMes) {
     return fecha.format('MMMM');
 }
 
+function obtenerNumeroMes(fecha) {
+      // Crear un objeto Moment a partir de la fecha
+      let fechaMoment = moment(fecha, 'YYYY-MM-DD');
+    
+      // Obtener el mes en formato numérico con dos dígitos (de 01 a 12)
+      let mesNumerico = fechaMoment.format('MM');
+  
+      return mesNumerico;
+}
+
 export function obtenerFechasDelMes(year, mes, formato) {
     // Crear la fecha inicial del mes
     let fechaInicial = moment([year, mes - 1]);
@@ -110,3 +120,41 @@ export function codificar(cadena) {
 
     return encriptado;       
 }
+
+export function buscarValorInArray(arr, value) {
+    let valor = value.replace(/^0+/, '')
+    for (var i = 0; i < arr.length; i++) {
+      var subArray = arr[i];
+      if (subArray.indexOf(valor) !== -1) {
+        return i; // Devuelve la posición del subarreglo donde se encontró el valor
+      }
+    }
+    return null; // Devuelve -1 si el valor no se encuentra en ningún subarreglo
+}
+
+export function aplicarFormatoNrocontrol(numero, cant = 8) {
+    let prefijo = 2;
+    // Construir la expresión regular dinámicamente con la cantidad deseada de dígitos
+    let regexStr = `^\\d{2}-\\d{${cant}}$`;
+    let cadena = new RegExp(regexStr);
+    
+    if (cadena.test(numero)) {
+        // Si ya tiene el formato correcto, devolver el número sin cambios
+        return numero;
+    } else {
+        // Si no tiene el formato correcto, verificar y aplicar el formato
+        var numeroSinGuiones = numero.replace(/-/g, ''); // Eliminar guiones si los hay
+
+        // Verificar si el número tiene menos de la cantidad deseada de dígitos y rellenar con ceros si es necesario
+        if (numeroSinGuiones.length < (prefijo+cant)) {
+            var cerosFaltantes = '0'.repeat((prefijo+cant) - numeroSinGuiones.length);
+            numeroSinGuiones = cerosFaltantes + numeroSinGuiones;
+        }
+
+        // Aplicar el formato
+        var numeroFormateado = numeroSinGuiones.replace(new RegExp(`(\\d{2})(\\d{${cant}})`), '$1-$2');
+        return numeroFormateado;
+    }
+}
+
+

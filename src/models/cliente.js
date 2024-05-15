@@ -17,6 +17,11 @@ export default class Cliente {
 
         this.url_prod = data.url_prod || null;
         this.url_qa = data.url_qa || null;
+        this.name_bd_column_encrypt = data.name_bd_column_encrypt || null;
+        this.name_bd_column_encrypt_others = data.name_bd_column_encrypt_others || null;
+
+        this.encrypt_url_format = data.encrypt_url_format || null;
+        this.encrypt_url_format_order = data.encrypt_url_format_order || null;
 
         this.name_bd_table = data.name_bd_table || null;
         this.name_bd_table_coletilla = data.name_bd_table_coletilla || null;
@@ -31,6 +36,14 @@ export default class Cliente {
 
         this.name_bd_column_tipo_documento = data.name_bd_column_tipo_documento || null;
         this.name_bd_column_tipo_documento_format = data.name_bd_column_tipo_documento_format || null;
+        this.name_bd_column_tipo_documento_view_pdf_format = data.name_bd_column_tipo_documento_view_pdf_format || null;
+        this.numero_control_view_pdf_format = data.numero_control_view_pdf_format || null;
+
+        this.name_bd_column_rif = data.name_bd_column_rif || null;
+        this.name_bd_column_razon_social = data.name_bd_column_razon_social || null;
+        
+        
+        
     }
 
     // Método estático para buscar un cliente por su RIF

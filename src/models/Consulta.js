@@ -24,7 +24,8 @@ export default class Consulta {
             const query = `
                 SELECT id, nombre, cliente_id
                 FROM consultas
-                WHERE cliente_id = ?;
+                WHERE cliente_id = ?
+                ORDER BY id;
             `;
 
 

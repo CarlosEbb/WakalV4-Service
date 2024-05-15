@@ -72,10 +72,8 @@ export default class ConsultasCliente {
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
         let url_documento;
-        let encrypt;
+        let addSelect = '';
 
-        // const clave = codificar('FACT00-00192253');
-        // const encrypt = Buffer.from(clave).toString('base64');
         if(this.cliente.is_prod == 1){
             url_documento = `'${this.cliente.url_prod}'`;
         }else{
@@ -131,6 +129,14 @@ export default class ConsultasCliente {
         let tipo_documento_nameParamBD = this.cliente.name_bd_column_tipo_documento;
         let tipo_documento_nameString = "tipo_documento";
 
+        let rif;
+        let rif_nameParamBD = this.cliente.name_bd_column_rif;
+        let rif_nameString = "rif";
+
+        let razon_social;
+        let razon_social_nameParamBD = this.cliente.name_bd_column_razon_social;
+        let razon_social_nameString = "razon_social";
+
         let fecha_inicio;
         let fecha_final;
         let fecha_tipo;
@@ -140,6 +146,12 @@ export default class ConsultasCliente {
 
         let fecha_asignacion_nameParamBD = this.cliente.name_bd_column_fecha_asignacion;
         let fecha_asignacion_nameString = "fecha_asignacion";
+
+        let encrypt_nameParamBD = this.cliente.name_bd_column_encrypt;
+        let encrypt_nameString = "encrypt";
+
+        let encrypt_others_nameParamBD = this.cliente.name_bd_column_encrypt_others;
+        let encrypt_others_nameString = "encrypt_others";
         
         if(queryParams.numero_control){
             numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
@@ -238,22 +250,97 @@ export default class ConsultasCliente {
             whereClause += `${fecha_selected} BETWEEN ? AND ?`;
         }
 
-        if(queryParams.tipo_documento){
-            tipo_documento = queryParams.tipo_documento;
-            params.push(tipo_documento);
+        if (queryParams.tipo_documento && queryParams.tipo_documento != "all") {
+            // Separar los valores por el carácter ';'
+            const tipo_documento_values = queryParams.tipo_documento.split(';');
+            
+            // Agregar los valores al array de parámetros
+            params.push(...tipo_documento_values);
+            
             if (whereClause !== '') {
                 whereClause += ' AND ';
             }
-            whereClause += `${tipo_documento_nameParamBD} = ?`;
+            
+            // Construir la cláusula IN con el número correcto de placeholders
+            const placeholders = tipo_documento_values.map(() => '?').join(',');
+            whereClause += `${tipo_documento_nameParamBD} IN (${placeholders})`;
         }
+
+        if (queryParams.rif) {
+            // Separar los valores por el carácter ';'
+            const rif_values = queryParams.rif.split(';');
+            
+            // Crear un array para almacenar todos los formatos
+            let allRifFormats = [];
+        
+            rif_values.forEach(rif => {
+                // Eliminar los guiones del valor original
+                let rifSinGuiones = rif.replace(/-/g, '');
+        
+                // Generar los diferentes formatos
+                let format1 = rif;
+                let format2 = rifSinGuiones;
+                let format3 = rifSinGuiones.slice(0, 2) + '-' + rifSinGuiones.slice(2);
+                let format4 = rifSinGuiones.slice(0, 2) + '-' + rifSinGuiones.slice(2, -1) + '-' + rifSinGuiones.slice(-1);
+                let format5 = rifSinGuiones.slice(0, -1) + '-' + rifSinGuiones.slice(-1);
+        
+                // Agregar todos los formatos al array
+                allRifFormats.push(format1, format2, format3, format4, format5);
+            });
+        
+            // Agregar los valores al array de parámetros
+            params.push(...allRifFormats);
+        
+            // Crear los placeholders_rif para la cláusula IN
+            const placeholders_rif = allRifFormats.map(() => '?').join(', ');
+        
+            if (whereClause !== '') {
+                whereClause += ' AND ';
+            }
+        
+            // Construir la cláusula IN con el número correcto de placeholders
+            whereClause += `${rif_nameParamBD} IN (${placeholders_rif})`;
+        }
+        
+
+        if (queryParams.razon_social) {
+
+            razon_social = queryParams.razon_social;
+            
+            // Agregar los valores al array de parámetros
+            params.push(rif_values);
+        
+            if (whereClause !== '') {
+                whereClause += ' AND ';
+            }
+        
+            // Construir la cláusula IN con el número correcto de placeholders
+            whereClause += `${razon_social_nameParamBD} = ?`;
+        }
+        
+        
+        if(this.cliente.name_bd_column_encrypt != null){
+            addSelect += `${encrypt_nameParamBD} as ${encrypt_nameString},`;
+        }else{
+            addSelect += `'no_encrypt' as ${encrypt_nameString},`;
+        }
+
+        if(this.cliente.name_bd_column_encrypt_others != null){
+            addSelect += `${encrypt_others_nameParamBD} as ${encrypt_others_nameString},`;
+        }else{
+            addSelect += `'' as ${encrypt_others_nameString},`;
+        }
+        
     
         //${url_documento} as url_documento
         let query = `SELECT ${numero_control_nameParamBD} as ${numero_control_nameString},
                             ${numero_documento_nameParamBD} as ${numero_documento_nameString},
                             ${fecha_emision_nameParamBD} as ${fecha_emision_nameString},
                             ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString},
+                            ${rif_nameParamBD} as ${rif_nameString},
+                            ${razon_social_nameParamBD} as ${razon_social_nameString},
+                            ${addSelect}
                             ${tipo_documento_nameParamBD} as ${tipo_documento_nameString}
-                            
                      FROM ${tabla}
                      WHERE ${whereClause}
                      ORDER BY ${numero_control_nameParamBD}`;
