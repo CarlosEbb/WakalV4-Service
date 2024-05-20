@@ -41,8 +41,22 @@ export default class Cliente {
 
         this.name_bd_column_rif = data.name_bd_column_rif || null;
         this.name_bd_column_razon_social = data.name_bd_column_razon_social || null;
-        
-        
+
+        this.name_bd_column_codigo_operacion = data.name_bd_column_codigo_operacion || null;
+        this.name_bd_column_serie = data.name_bd_column_serie || null;
+        this.name_bd_column_hora_emision = data.name_bd_column_hora_emision || null;
+        this.name_bd_column_status = data.name_bd_column_status || null;
+        this.name_bd_column_motivo_anulacion = data.name_bd_column_motivo_anulacion || null;
+        this.name_bd_column_fecha_anulacion = data.name_bd_column_fecha_anulacion || null;
+        this.name_bd_column_hora_anulacion = data.name_bd_column_hora_anulacion || null; 
+
+        this.name_bd_column_neto_pagar = data.name_bd_column_neto_pagar || null; 
+        this.name_bd_column_igtf = data.name_bd_column_igtf || null; 
+        this.name_bd_column_total_pagar = data.name_bd_column_total_pagar || null; 
+        this.name_bd_column_base_imponible = data.name_bd_column_base_imponible || null; 
+        this.name_bd_column_monto_iva = data.name_bd_column_monto_iva || null; 
+        this.name_bd_column_monto_exento = data.name_bd_column_monto_exento || null; 
+        this.name_bd_column_monto_no_sujeto = data.name_bd_column_monto_no_sujeto || null; 
         
     }
 

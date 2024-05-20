@@ -1,4 +1,4 @@
-import { executeQuery, prepareQueryforClient } from '../utils/dbUtils.js';
+import { executeQuery, prepareQueryforClient, addPreciosDomesa } from '../utils/dbUtils.js';
 import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes, codificar } from '../utils/tools.js';
 
 export default class ConsultasCliente {
@@ -152,7 +152,54 @@ export default class ConsultasCliente {
 
         let encrypt_others_nameParamBD = this.cliente.name_bd_column_encrypt_others;
         let encrypt_others_nameString = "encrypt_others";
+
+
+        let codigo_operacion_nameParamBD = this.cliente.name_bd_column_codigo_operacion;
+        let codigo_operacion_nameString = "codigo_operacion";
+
+        let serie_nameParamBD = this.cliente.name_bd_column_serie;
+        let serie_nameString = "serie";
+
+        let hora_emision_nameParamBD = this.cliente.name_bd_column_hora_emision;
+        let hora_emision_nameString = "hora_emision";
+
+
+        let status_nameParamBD = this.cliente.name_bd_column_status;
+        let status_nameString = "status";
+
+
+        let motivo_anulacion_nameParamBD = this.cliente.name_bd_column_motivo_anulacion;
+        let motivo_anulacion_nameString = "motivo_anulacion";
+
+
+        let fecha_anulacion_nameParamBD = this.cliente.name_bd_column_fecha_anulacion;
+        let fecha_anulacion_nameString = "fecha_anulacion";
+
+        let hora_anulacion_nameParamBD = this.cliente.name_bd_column_hora_anulacion;
+        let hora_anulacion_nameString = "hora_anulacion";
+
+        let neto_pagar_nameParamBD = this.cliente.name_bd_column_neto_pagar;
+        let neto_pagar_nameString = "neto_pagar";
+
+        let igtf_nameParamBD = this.cliente.name_bd_column_igtf;
+        let igtf_nameString = "igtf";
+
+        let total_pagar_nameParamBD = this.cliente.name_bd_column_total_pagar;
+        let total_pagar_nameString = "total_pagar";
+
+        let base_imponible_nameParamBD = this.cliente.name_bd_column_base_imponible;
+        let base_imponible_nameString = "base_imponible";
+
+        let monto_iva_nameParamBD = this.cliente.name_bd_column_monto_iva;
+        let monto_iva_nameString = "monto_iva";
         
+        let monto_exento_nameParamBD = this.cliente.name_bd_column_monto_exento;
+        let monto_exento_nameString = "monto_exento";
+        
+        let no_sujeto_nameParamBD = this.cliente.name_bd_column_monto_no_sujeto;
+        let no_sujeto_nameString = "monto_no_sujeto";
+
+
         if(queryParams.numero_control){
             numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
             let cantidad_mostrar = 10;
@@ -267,26 +314,26 @@ export default class ConsultasCliente {
         }
 
         if (queryParams.rif) {
-            // Separar los valores por el carácter ';'
-            const rif_values = queryParams.rif.split(';');
+           
+            const rif = queryParams.rif;
             
             // Crear un array para almacenar todos los formatos
             let allRifFormats = [];
         
-            rif_values.forEach(rif => {
-                // Eliminar los guiones del valor original
-                let rifSinGuiones = rif.replace(/-/g, '');
-        
-                // Generar los diferentes formatos
-                let format1 = rif;
-                let format2 = rifSinGuiones;
-                let format3 = rifSinGuiones.slice(0, 2) + '-' + rifSinGuiones.slice(2);
-                let format4 = rifSinGuiones.slice(0, 2) + '-' + rifSinGuiones.slice(2, -1) + '-' + rifSinGuiones.slice(-1);
-                let format5 = rifSinGuiones.slice(0, -1) + '-' + rifSinGuiones.slice(-1);
-        
-                // Agregar todos los formatos al array
-                allRifFormats.push(format1, format2, format3, format4, format5);
-            });
+  
+            // Eliminar los guiones del valor original
+            let rifSinGuiones = rif.replace(/-/g, '');
+    
+            // Generar los diferentes formatos
+            let format1 = rif;
+            let format2 = rifSinGuiones;
+            let format3 = rifSinGuiones.slice(0, 1) + '-' + rifSinGuiones.slice(1);
+            let format4 = rifSinGuiones.slice(0, 1) + '-' + rifSinGuiones.slice(1, -1) + '-' + rifSinGuiones.slice(-1);
+            let format5 = rifSinGuiones.slice(0, -1) + '-' + rifSinGuiones.slice(-1);
+
+            // Agregar todos los formatos al array
+            allRifFormats.push(format1, format2, format3, format4, format5);
+  
         
             // Agregar los valores al array de parámetros
             params.push(...allRifFormats);
@@ -308,7 +355,7 @@ export default class ConsultasCliente {
             razon_social = queryParams.razon_social;
             
             // Agregar los valores al array de parámetros
-            params.push(rif_values);
+            params.push(razon_social);
         
             if (whereClause !== '') {
                 whereClause += ' AND ';
@@ -325,13 +372,36 @@ export default class ConsultasCliente {
             addSelect += `'no_encrypt' as ${encrypt_nameString},`;
         }
 
-        if(this.cliente.name_bd_column_encrypt_others != null){
-            addSelect += `${encrypt_others_nameParamBD} as ${encrypt_others_nameString},`;
-        }else{
-            addSelect += `'' as ${encrypt_others_nameString},`;
-        }
         
-    
+
+        // Definir un array con los pares de nombres de parámetros y cadenas de texto correspondientes
+        const columnas = [
+            { paramBD: neto_pagar_nameParamBD, string: neto_pagar_nameString },
+            { paramBD: igtf_nameParamBD, string: igtf_nameString },
+            { paramBD: total_pagar_nameParamBD, string: total_pagar_nameString },
+            { paramBD: base_imponible_nameParamBD, string: base_imponible_nameString },
+            { paramBD: monto_iva_nameParamBD, string: monto_iva_nameString },
+            { paramBD: monto_exento_nameParamBD, string: monto_exento_nameString },
+            { paramBD: no_sujeto_nameParamBD, string: no_sujeto_nameString },
+            { paramBD: encrypt_others_nameParamBD, string: encrypt_others_nameString },
+            { paramBD: codigo_operacion_nameParamBD, string: codigo_operacion_nameString },
+            { paramBD: serie_nameParamBD, string: serie_nameString },
+            { paramBD: hora_emision_nameParamBD, string: hora_emision_nameString },
+            { paramBD: status_nameParamBD, string: status_nameString },
+            { paramBD: motivo_anulacion_nameParamBD, string: motivo_anulacion_nameString },
+            { paramBD: fecha_anulacion_nameParamBD, string: fecha_anulacion_nameString },
+            { paramBD: hora_anulacion_nameParamBD, string: hora_anulacion_nameString },
+        ];
+
+        // Recorrer el array de columnas y construir la cadena addSelect
+        columnas.forEach(columna => {
+            if (columna.paramBD !== null) {
+                addSelect += `${columna.paramBD} as ${columna.string},`;
+            } else {
+                addSelect += `'' as ${columna.string},`;
+            }
+        });
+
         //${url_documento} as url_documento
         let query = `SELECT ${numero_control_nameParamBD} as ${numero_control_nameString},
                             ${numero_documento_nameParamBD} as ${numero_documento_nameString},
@@ -346,8 +416,10 @@ export default class ConsultasCliente {
                      ORDER BY ${numero_control_nameParamBD}`;
         console.log(query, params);
         
-        const result = await executeQuery(this.cliente.connections, query, params);
-
+        let result = await executeQuery(this.cliente.connections, query, params);
+        if(this.cliente.id == 10){
+            result = await addPreciosDomesa(result, this.cliente.connections);
+        }
         return result;
     }
     

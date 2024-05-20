@@ -58,7 +58,7 @@ export const login = async (req, res) => {
         res.status(401).json(jsonResponse);
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
-        const jsonResponse = createJSONResponse(500, 'Error interno del servidor', {});
+        const jsonResponse = createJSONResponse(500, 'Error interno del servidor ' + JSON.stringify(error), {});
         res.status(500).json(jsonResponse);
     }
 };

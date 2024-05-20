@@ -68,4 +68,64 @@ export async function validateConnection(DSN) {
       }
   }
 }
-  
+
+//Agregar valores adicionales de precio y montos al cliente domesa
+
+export async function addPreciosDomesa(array, db) {
+  const str_replace = (search, replace, subject) => {
+      return subject.split(search).join(replace);
+  };
+
+  for (const item of array) {
+      let queries = [];
+
+      // Determinar la consulta basada en el tipo_documento
+      if (item.tipo_documento === '1' || item.tipo_documento === '2') {
+          queries.push(`SELECT Concepto, MONTO FROM TotalesFactura WHERE NROFACTT = '${item.numero_documento}'`);
+      } else if (item.tipo_documento === '3') {
+          queries.push(`SELECT Concepto, MONTO FROM TotalesCredito WHERE NRONCR = '${item.numero_documento}'`);
+      }
+
+      for (const query of queries) {
+          let resultado = await executeQuery(db, query, []);
+
+          for (const resTemp of resultado) {
+              let tempConcepto = resTemp.Concepto;
+              tempConcepto = str_replace('.', '', tempConcepto);
+              tempConcepto = str_replace(' ', '', tempConcepto);
+              tempConcepto = str_replace(',', '', tempConcepto);
+              tempConcepto = str_replace('0', '', tempConcepto);
+              tempConcepto = str_replace(':', '', tempConcepto);
+              tempConcepto = str_replace('Bs', '', tempConcepto);
+              tempConcepto = str_replace('BS', '', tempConcepto);
+
+              if(item.tipo_documento == "1" || item.tipo_documento == "2" || item.tipo_documento == "4"){
+                if(tempConcepto == "NETOAPAGAR"){
+                  item["neto_pagar"] = resTemp.MONTO;
+                  item["total_pagar"] = resTemp.MONTO;
+                }
+
+              }else if(item.tipo_documento == "3" || item.tipo_documento == "5"){
+                if(tempConcepto == "TOTALNOTA"){
+                  item["neto_pagar"] = resTemp.MONTO;
+                }
+              }
+
+              if(tempConcepto == "BASEIMPONIBLE"){
+                item["base_imponible"] = resTemp.MONTO;
+              }
+              if(tempConcepto == "IVA16%"){
+                item["monto_iva"] = resTemp.MONTO;
+              }
+              if(tempConcepto == "TOTAL EXENTO"){
+                item["monto_exento"] = resTemp.MONTO;
+              }
+
+              //item[tempConcepto] = resTemp.MONTO;
+          }
+      }
+  }
+
+  return array;
+}
+
