@@ -14,9 +14,11 @@ import consultaRoutes from './routes/consultaRoutes.js';
 import consultasClienteRoutes from './routes/consultasClienteRoutes.js';
 
 import {createJSONResponse} from './utils/responseUtils.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8001;
 
 // Habilitar CORS para todas las rutas
 // Configuración de CORS
