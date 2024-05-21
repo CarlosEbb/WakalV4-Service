@@ -83,7 +83,7 @@ export default class User {
         `;
         console.log(process.env.DB_CONNECTION_ODBC, query, [email, email, email]);
         const result = await executeQuery("wakal4_0", query, [email, email, email]);
-        console.log('siiiii: ',result);
+        
         if (result && result.length > 0) {
             return new User(result[0]);
         }
