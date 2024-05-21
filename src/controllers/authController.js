@@ -12,7 +12,7 @@ import { generateResetToken, generateAuthToken, isTokenInvalid, addToInvalidToke
 import { createJSONResponse } from '../utils/responseUtils.js';
 import { insertAuditoria } from '../utils/auditUtils.js';
 import { sendEmail } from '../utils/emailController.js';
-
+import Joi from 'joi';
 
 //import * as dotenv from 'dotenv' dotenv.config();
 //require('dotenv').config();
@@ -120,6 +120,29 @@ export const resetPasswordRequest = async (req, res) => {
     }
 };
 
+const schema = Joi.object({
+  newPassword: Joi.string()
+    .min(6)
+    .message('La contraseña debe tener al menos 6 caracteres.')
+    .pattern(new RegExp('^(?=.*[a-z])'))
+    .message('La contraseña debe contener al menos una letra minúscula.')
+    .pattern(new RegExp('^(?=.*[A-Z])'))
+    .message('La contraseña debe contener al menos una letra mayúscula.')
+    .pattern(new RegExp('^(?=.*[0-9])'))
+    .message('La contraseña debe contener al menos un número.')
+    .pattern(new RegExp('^(?=.*[!@#$%^&*(),.?":{}|<>])'))
+    .message('La contraseña debe contener al menos un carácter especial.')
+    .required()
+    .messages({
+      'string.base': 'La contraseña debe ser un texto.',
+      'string.empty': 'La contraseña no puede estar vacía.',
+      'string.min': 'La contraseña debe tener al menos 6 caracteres.',
+      'string.pattern.base': 'La contraseña no cumple con los requisitos de complejidad.',
+      'any.required': 'La contraseña es un campo requerido.'
+    }),
+    token: Joi.string().required()
+});
+  
 export const changePassword = async (req, res) => {
     try {
         const { token, newPassword } = req.body;
@@ -129,6 +152,13 @@ export const changePassword = async (req, res) => {
         if (TokenInvalid) {
             // Si el token está en la lista de tokens inválidos, devolver un error
             const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['¡Ups! El token que has introducido no es válido o ya ha sido utilizado'] });
+            return res.status(400).json(jsonResponse);
+        }
+
+        const { error, value } = schema.validate(req.body, { abortEarly: false });
+        if (error) {
+            const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
             return res.status(400).json(jsonResponse);
         }
 

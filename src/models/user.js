@@ -3,7 +3,6 @@
 import { executeQuery } from '../utils/dbUtils.js';
 import bcrypt from 'bcrypt';
 
-
 export default class User {
     #password; // Propiedad privada
 
@@ -33,6 +32,7 @@ export default class User {
         this.jurisdiccion_sector = data.jurisdiccion_sector;
         this.cargo = data.cargo;
         this.cod_area = data.cod_area;
+        this.is_tour = data.is_tour;
         
         if(data.rol_id == 3){
             this.cliente_id = data.cliente_id;
@@ -81,10 +81,13 @@ export default class User {
             LEFT JOIN clientes c ON uc.cliente_id = c.id
             WHERE (u.email = ? OR u.email_alternativo = ? OR u.username = ?) AND u.enabled = 1
         `;
-        const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [email, email, email]);
+        console.log(process.env.DB_CONNECTION_ODBC, query, [email, email, email]);
+        const result = await executeQuery("wakal4_0", query, [email, email, email]);
+        console.log('siiiii: ',result);
         if (result && result.length > 0) {
             return new User(result[0]);
         }
+        
         return null;
     }
     
