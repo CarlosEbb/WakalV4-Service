@@ -4,13 +4,12 @@ import odbc from 'odbc';
 export async function executeQuery(DSN, query, params) {
   let connection;
   try {
-    console.log("paso1: ");
     // Establece la conexión utilizando el DSN proporcionado
-    connection = await odbc.connect(`DSN=wakalSL4_0;CHARSET=UTF8;`);
-    console.log("paso2: ");
+    connection = await odbc.connect(`DSN=${DSN};CHARSET=UTF8;`);
+
     // Ejecuta la consulta con los parámetros proporcionados
     const result = await connection.query(query, params);
-    console.log("paso3: ");
+
     // Retorna el resultado de la consulta
     return result;
   } catch (error) {
