@@ -9,6 +9,7 @@ export default class Cliente {
         this.nombre_cliente = data.nombre_cliente;
         this.is_prod = data.is_prod || null;
         this.connections = data.connections || null;
+        this.is_tour = data.is_tour || null;
 
         this.logo = data.logo || null;
         this.created_at = data.created_at || null;
