@@ -130,7 +130,6 @@ export const createUsuario = async (req, res) => {
         }
         if(req.user.rol_id == 3){
             const userCliente = await User.findById(registered_by_user_id);
-            console.log(userCliente);
             await UserCliente.create({"user_id": newUserId, "cliente_id": userCliente.cliente_id})
         }
 

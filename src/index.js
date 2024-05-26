@@ -1,5 +1,6 @@
 //index.js
 import express from 'express';
+import compression from 'compression';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import csrf from 'csurf'; // Importa csurf para la protección CSRF
@@ -20,13 +21,17 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8001;
 
+// Habilitar compresión
+app.use(compression());
+
 // Habilitar CORS para todas las rutas
 // Configuración de CORS
 app.use(cors({
-    origin: ['http://localhost:8002'],
+    origin: ['http://localhost:8002','https://wsplusqa.solucioneslaser.com/', 'https://wakalplusqa.solucioneslaser.com/'],
     methods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 
 // Hacer que la carpeta 'uploads' sea pública
 app.use('/uploads', express.static('uploads'));

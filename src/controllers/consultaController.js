@@ -53,7 +53,6 @@ export const getAllConsultasByCliente = async (req, res) => {
 export const getConsultasPDF = async (req, res) => {
     try {
         const { token } = req.query;
-        console.log(token);
         // Verificar si el token está en la lista de tokens inválidos
         const TokenInvalid = await isTokenInvalid(token);
 
@@ -96,8 +95,6 @@ export const getConsultasPDF = async (req, res) => {
             
             
             let array = JSON.parse(cliente.name_bd_column_tipo_documento_format).values;
-            console.log(array);
-            console.log(req.params.tipo_documento);
             
             let tipo_view_pdf = req.params.tipo_documento;
             let control_view_pdf;
@@ -110,7 +107,6 @@ export const getConsultasPDF = async (req, res) => {
             }
             if(cliente.numero_control_view_pdf_format == 1){
                 if(cliente.id == 2 ){
-                    console.log("sdfsdffdsfsd");
                     control_view_pdf = aplicarFormatoNrocontrol(req.params.numero_control,7);
                 }else{
                     control_view_pdf = aplicarFormatoNrocontrol(req.params.numero_control);
@@ -124,23 +120,16 @@ export const getConsultasPDF = async (req, res) => {
             if(cliente.name_bd_column_encrypt != null){
                 if(req.params.encrypt){
                     encrypt = req.params.encrypt;
-                    console.log('siiii',encrypt);
                 }
             }
             if(encrypt != null){
 
-                console.log(encrypt);
                 encrypt = encrypt.replace("{{tipo_documento}}", (tipo_view_pdf ? tipo_view_pdf : ""));
-                console.log(encrypt);
                 encrypt = encrypt.replace("{{numero_control}}", (control_view_pdf ? control_view_pdf : ""));
-                console.log(encrypt);
                 encrypt = encrypt.replace("{{numero_documento}}", (req.params.numero_documento ? req.params.numero_documento : ""));
-                console.log(encrypt);
                 encrypt = encrypt.replace("{{mes}}", (req.params.mes ? req.params.mes : ""));
-                console.log(encrypt);
     
                 let funcionesAUsar = JSON.parse(cliente.encrypt_url_format);
-                console.log(encrypt);
 
                 if(funcionesAUsar != null){
                     funcionesAUsar.forEach(funcion => {

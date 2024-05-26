@@ -102,7 +102,7 @@ export default class Cliente {
 
     // Método para crear un nuevo cliente
     static async create(data) {
-        console.log(data);
+       
         try {
             const insertQuery = `
             BEGIN
@@ -199,9 +199,9 @@ export default class Cliente {
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}
                 WHERE id = ?
             `;
-            console.log(updateQuery);
+           
             const updateParams = [...Object.values(fieldsToUpdate), clienteId];
-            console.log(updateParams);
+            
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
     
             console.log('Campos actualizados correctamente');

@@ -1,15 +1,35 @@
-//dbUtils.js
 import odbc from 'odbc';
 
+// Objeto para almacenar pools de conexiones por DSN
+const pools = {};
+
+// Función para obtener un pool de conexiones o crearlo si no existe
+async function getPool(DSN) {
+  if (!pools[DSN]) {
+    pools[DSN] = await odbc.pool({
+      connectionString: `DSN=${DSN};CHARSET=UTF8;`,
+      initialSize: 10,  // Número inicial de conexiones en el pool
+      maxSize: 100,     // Número máximo de conexiones en el pool
+      connectTimeout: 10 // Tiempo máximo de espera para una conexión (en segundos)
+    });
+  }
+  return pools[DSN];
+}
+
+// Función para ejecutar consultas usando el pool de conexiones adecuado
 export async function executeQuery(DSN, query, params) {
+  //console.log(DSN, query, params);
   let connection;
   try {
-    // Establece la conexión utilizando el DSN proporcionado
-    connection = await odbc.connect(`DSN=${DSN};CHARSET=UTF8;`);
-
+    // Obtén el pool de conexiones para el DSN dado
+    const pool = await getPool(DSN);
+    
+    // Obtén una conexión del pool
+    connection = await pool.connect();
+    
     // Ejecuta la consulta con los parámetros proporcionados
     const result = await connection.query(query, params);
-
+    
     // Retorna el resultado de la consulta
     return result;
   } catch (error) {
@@ -17,7 +37,7 @@ export async function executeQuery(DSN, query, params) {
     console.error('Error al ejecutar la consulta:', error);
     throw error; // Puedes decidir si quieres propagar el error o manejarlo aquí mismo
   } finally {
-    // Cierra la conexión si está abierta
+    // Devuelve la conexión al pool
     if (connection) {
       try {
         await connection.close();

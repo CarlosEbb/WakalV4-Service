@@ -151,7 +151,7 @@ export const updateCliente = async (req, res) => {
 
         // Si pasa todas las validaciones, actualizar el cliente
         fieldsToUpdate.logo = imagen ? saveImage(imagen) : null;
-        console.log('aquiii', limpiarObjeto(fieldsToUpdate))
+        //console.log('aquiii', limpiarObjeto(fieldsToUpdate))
         await Cliente.updateFields(clienteId, limpiarObjeto(fieldsToUpdate));
         const jsonResponse = createJSONResponse(200, 'Cliente actualizado correctamente', {});
         return res.status(200).json(jsonResponse);

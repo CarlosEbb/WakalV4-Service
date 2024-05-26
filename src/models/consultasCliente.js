@@ -225,7 +225,7 @@ export default class ConsultasCliente {
         if(queryParams.numero_documento){
             let hasLetters = /[a-zA-Z]/.test(queryParams.numero_documento);
             let hasHyphen = queryParams.numero_documento.includes('-');
-            console.log(hasLetters || hasHyphen || this.cliente.id == 4);
+            
             if(hasLetters || hasHyphen || this.cliente.id == 4){//si contiene letras
                 let simbolo = '-'; 
 
@@ -414,7 +414,7 @@ export default class ConsultasCliente {
                      FROM ${tabla}
                      WHERE ${whereClause}
                      ORDER BY ${numero_control_nameParamBD}`;
-        console.log(query, params);
+        
         
         let result = await executeQuery(this.cliente.connections, query, params);
         if(this.cliente.id == 10){

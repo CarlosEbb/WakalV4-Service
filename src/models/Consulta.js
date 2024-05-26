@@ -30,7 +30,7 @@ export default class Consulta {
 
 
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, [clienteId]);
-            console.log(result);
+           
             return result.map(row => new Consulta(row.id, row.nombre, row.cliente_id, row.created_at, row.updated_at));
         } catch (error) {
             console.error('Error al buscar consultas por cliente ID:', error);
