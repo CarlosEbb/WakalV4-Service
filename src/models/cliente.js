@@ -44,7 +44,11 @@ export default class Cliente {
         this.name_bd_column_razon_social = data.name_bd_column_razon_social || null;
 
         this.name_bd_column_codigo_operacion = data.name_bd_column_codigo_operacion || null;
+        this.name_bd_column_codigo_operacion_format = data.name_bd_column_codigo_operacion_format || null;
+
         this.name_bd_column_serie = data.name_bd_column_serie || null;
+        this.name_bd_column_serie_format = data.name_bd_column_serie_format || null; 
+
         this.name_bd_column_hora_emision = data.name_bd_column_hora_emision || null;
         this.name_bd_column_status = data.name_bd_column_status || null;
         this.name_bd_column_motivo_anulacion = data.name_bd_column_motivo_anulacion || null;
@@ -58,6 +62,9 @@ export default class Cliente {
         this.name_bd_column_monto_iva = data.name_bd_column_monto_iva || null; 
         this.name_bd_column_monto_exento = data.name_bd_column_monto_exento || null; 
         this.name_bd_column_monto_no_sujeto = data.name_bd_column_monto_no_sujeto || null; 
+
+        this.name_bd_column_correo_cliente = data.name_bd_column_correo_cliente || null; 
+        this.name_bd_column_telefono_cliente = data.name_bd_column_telefono_cliente || null; 
         
     }
 

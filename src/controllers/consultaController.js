@@ -1,4 +1,5 @@
 import Consulta from '../models/Consulta.js';
+import Parametro from '../models/Parametro.js';
 import ConsultaParametros from '../models/ConsultaParametros.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
 import Cliente from '../models/cliente.js';
@@ -49,6 +50,64 @@ export const getAllConsultasByCliente = async (req, res) => {
         return res.status(500).json(jsonResponse);
     }
 };
+
+// Controlador para obtener todos los parametros de un cliente
+export const getAllParametros = async (req, res) => {
+    try {        
+        // Obtener todas las consultas del cliente
+        const parametros = await Parametro.getAll();
+        
+
+        // Retornar las consultas con sus parámetros en el response
+        const jsonResponse = createJSONResponse(200, 'Parametros obtenidas correctamente', parametros);
+        return res.status(200).json(jsonResponse);
+    } catch (error) {
+        console.error('Error al obtener los parametros del cliente:', error);
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        return res.status(500).json(jsonResponse);
+    }
+};
+
+export const createConsultas = async (req, res) => {
+    try {
+        const { cliente_id } = req.params;
+
+        const consultasByname = await Consulta.findByClienteIdAndName(cliente_id, req.body.nombre_consulta);
+
+        // Validar si consultasByname no tiene ningún elemento
+        if (consultasByname.length > 0) {
+            const jsonResponse = createJSONResponse(400, 'Error', { errors: ['Ya existe una consulta con ese nombre para el cliente especificado.'] });
+            return res.status(400).json(jsonResponse);
+        }
+
+        // Continuar con el flujo normal si no hay consultas con el mismo nombre
+        const consultaId = await Consulta.create(cliente_id, req.body);
+        
+        // Retornar las consultas con sus parámetros en el response
+        const jsonResponse = createJSONResponse(200, 'Consulta creada correctamente', { consultaId });
+        return res.status(200).json(jsonResponse);
+    } catch (error) {
+        console.error('Error al crear consulta: ', error);
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        return res.status(500).json(jsonResponse);
+    }
+};
+
+export const deleteConsultas = async (req, res) => {
+    try {
+        const consulta_id = req.params.id;
+        await Consulta.delete(consulta_id);
+        const jsonResponse = createJSONResponse(200, 'Consulta eliminada correctamente', {});
+        return res.status(200).json(jsonResponse);
+    } catch (error) {
+        console.error('Error al eliminar la consulta:', error);
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        return res.status(500).json(jsonResponse);
+    }
+};
+
+
+
 
 export const getConsultasPDF = async (req, res) => {
     try {

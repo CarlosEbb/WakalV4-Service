@@ -23,7 +23,7 @@ export async function executeQuery(DSN, query, params) {
   try {
     // Obtén el pool de conexiones para el DSN dado
     const pool = await getPool(DSN);
-    
+    //console.log(DSN);
     // Obtén una conexión del pool
     connection = await pool.connect();
     
@@ -34,7 +34,14 @@ export async function executeQuery(DSN, query, params) {
     return result;
   } catch (error) {
     // Captura y maneja cualquier error que ocurra durante la ejecución de la consulta
-    console.error('Error al ejecutar la consulta:', error);
+    console.error(`Error al ejecutar la consulta ODBC - ${DSN}:`, error);
+    
+    // Limpia el pool de conexiones para este DSN
+    if (pools[DSN]) {
+      await pools[DSN].close();
+      delete pools[DSN];
+    }
+    
     throw error; // Puedes decidir si quieres propagar el error o manejarlo aquí mismo
   } finally {
     // Devuelve la conexión al pool

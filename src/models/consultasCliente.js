@@ -129,9 +129,19 @@ export default class ConsultasCliente {
         let tipo_documento_nameParamBD = this.cliente.name_bd_column_tipo_documento;
         let tipo_documento_nameString = "tipo_documento";
 
+        let serie;
+        let serie_nameParamBD = this.cliente.name_bd_column_serie;
+        let serie_nameString = "serie";
+
         let rif;
         let rif_nameParamBD = this.cliente.name_bd_column_rif;
         let rif_nameString = "rif";
+
+        let correo_cliente_nameParamBD = this.cliente.name_bd_column_correo_cliente;
+        let correo_cliente_nameString = "correo_cliente";
+
+        let telefono_cliente_nameParamBD = this.cliente.name_bd_column_telefono_cliente;
+        let telefono_cliente_nameString = "telefono_cliente";
 
         let razon_social;
         let razon_social_nameParamBD = this.cliente.name_bd_column_razon_social;
@@ -155,10 +165,10 @@ export default class ConsultasCliente {
 
 
         let codigo_operacion_nameParamBD = this.cliente.name_bd_column_codigo_operacion;
+        if(codigo_operacion_nameParamBD == null){
+            codigo_operacion_nameParamBD = this.cliente.name_bd_column_codigo_operacion_format;
+        }
         let codigo_operacion_nameString = "codigo_operacion";
-
-        let serie_nameParamBD = this.cliente.name_bd_column_serie;
-        let serie_nameString = "serie";
 
         let hora_emision_nameParamBD = this.cliente.name_bd_column_hora_emision;
         let hora_emision_nameString = "hora_emision";
@@ -245,6 +255,7 @@ export default class ConsultasCliente {
                 let digitos = partes[1].length; // obtiene la cantidad de dígitos
 
                 let cantidad_mostrar = 10;
+                
                 if(queryParams.especifico_check){
                     cantidad_mostrar = 0;
                 }
@@ -258,7 +269,7 @@ export default class ConsultasCliente {
                     let doc = prefijo + simbolo + String(i).padStart(digitos, '0');
                     params.push(doc);
                 }
-
+                
                 // Genera los signos de interrogación para la cláusula IN
                 let placeholders = params.map(() => '?').join(',');
 
@@ -267,10 +278,14 @@ export default class ConsultasCliente {
                     whereClause += ' OR ';
                 }
                 whereClause += `${numero_documento_nameParamBD} IN (${placeholders})`;
-
+                
             }else{//solo son numeros
                 numero_documento = Number(queryParams.numero_documento.replace(/-/g, '').replace(/^0+/, ''));
-                params.push(numero_documento - 10); params.push(numero_documento + 10);
+                let cantidad_mostrar = 10;
+                if(queryParams.especifico_check){
+                    cantidad_mostrar = 0;
+                }
+                params.push(numero_documento - cantidad_mostrar); params.push(numero_documento + cantidad_mostrar);
                 if (whereClause !== '') {
                     whereClause += ' OR ';
                 }
@@ -311,6 +326,22 @@ export default class ConsultasCliente {
             // Construir la cláusula IN con el número correcto de placeholders
             const placeholders = tipo_documento_values.map(() => '?').join(',');
             whereClause += `${tipo_documento_nameParamBD} IN (${placeholders})`;
+        }
+
+        if (queryParams.serie && queryParams.serie != "all") {
+            // Separar los valores por el carácter ';'
+            const serie_values = queryParams.serie.split(';');
+            
+            // Agregar los valores al array de parámetros
+            params.push(...serie_values);
+            
+            if (whereClause !== '') {
+                whereClause += ' AND ';
+            }
+            
+            // Construir la cláusula IN con el número correcto de placeholders
+            const placeholders = serie_values.map(() => '?').join(',');
+            whereClause += `${serie_nameParamBD} IN (${placeholders})`;
         }
 
         if (queryParams.rif) {
@@ -391,6 +422,9 @@ export default class ConsultasCliente {
             { paramBD: motivo_anulacion_nameParamBD, string: motivo_anulacion_nameString },
             { paramBD: fecha_anulacion_nameParamBD, string: fecha_anulacion_nameString },
             { paramBD: hora_anulacion_nameParamBD, string: hora_anulacion_nameString },
+
+            { paramBD: correo_cliente_nameParamBD, string: correo_cliente_nameString },
+            { paramBD: telefono_cliente_nameParamBD, string: telefono_cliente_nameString },
         ];
 
         // Recorrer el array de columnas y construir la cadena addSelect
@@ -410,12 +444,13 @@ export default class ConsultasCliente {
                             ${rif_nameParamBD} as ${rif_nameString},
                             ${razon_social_nameParamBD} as ${razon_social_nameString},
                             ${addSelect}
-                            ${tipo_documento_nameParamBD} as ${tipo_documento_nameString}
+                            ${tipo_documento_nameParamBD} as ${tipo_documento_nameString},
+                            '${this.cliente.rif}' as rif_prestador
                      FROM ${tabla}
                      WHERE ${whereClause}
                      ORDER BY ${numero_control_nameParamBD}`;
         
-        
+        console.log(query, params);
         let result = await executeQuery(this.cliente.connections, query, params);
         if(this.cliente.id == 10){
             result = await addPreciosDomesa(result, this.cliente.connections);
