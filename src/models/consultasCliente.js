@@ -1,5 +1,5 @@
 import { executeQuery, prepareQueryforClient, addPreciosDomesa } from '../utils/dbUtils.js';
-import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes, codificar } from '../utils/tools.js';
+import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes, codificar, obtenerNumeroMes } from '../utils/tools.js';
 
 export default class ConsultasCliente {
     constructor(cliente) {
@@ -66,7 +66,7 @@ export default class ConsultasCliente {
     }
 
     async getDataBusqueda(queryParams) {
-        
+     
         let params = [];
         
         let whereClause = '';
@@ -80,7 +80,7 @@ export default class ConsultasCliente {
             url_documento = `'${this.cliente.url_qa}'`;
         }
         
-        if(this.cliente.name_bd_table_coletilla != null){
+        if(this.cliente.name_bd_table_coletilla != null && (queryParams.numero_control || queryParams.numero_documento)){
             let params_coletilla = [];
             let queryPart = '';
             if (queryParams.numero_control) {
@@ -100,13 +100,15 @@ export default class ConsultasCliente {
                 queryPart += `? BETWEEN rangoInicalND AND rangoFinalND`;
             }
 
+            
+
             let query_coletilla = `
                 SELECT 
                     mesCarga as numero_mes
                 FROM coletilla
                 ${queryPart !== '' ? 'WHERE ' + queryPart : ''}
             `;
-
+            
             const result_coletilla = await executeQuery(this.cliente.connections, query_coletilla, params_coletilla);
             let data_coletilla = result_coletilla[0]?.numero_mes;
             if(!data_coletilla){
@@ -115,7 +117,16 @@ export default class ConsultasCliente {
             if (tabla.includes('{{Mes}}')) {
                 tabla = tabla.replace('{{Mes}}',obtenerNombreDelMes(data_coletilla));
             }
+        }else if(queryParams.fecha_inicio || queryParams.fecha_final){
+           
+            if (tabla.includes('{{Mes}}')) {
+                tabla = tabla.replace('{{Mes}}', obtenerNombreDelMes(obtenerNumeroMes(queryParams.fecha_inicio)));
+            }
         }
+
+        let page = 1;
+        let limit = 10;
+        let offset = (page - 1) * limit + 1;
 
         let numero_control;
         let numero_control_nameParamBD = this.cliente.name_bd_column_numero_control;
@@ -437,7 +448,17 @@ export default class ConsultasCliente {
         });
 
         //${url_documento} as url_documento
-        let query = `SELECT ${numero_control_nameParamBD} as ${numero_control_nameString},
+
+        if(queryParams.limit){
+            limit = queryParams.limit
+        }
+
+        if(queryParams.offset){
+            offset = queryParams.offset;
+        }
+
+        let query = `SELECT TOP ${limit} START AT ${offset}
+                            ${numero_control_nameParamBD} as ${numero_control_nameString},
                             ${numero_documento_nameParamBD} as ${numero_documento_nameString},
                             ${fecha_emision_nameParamBD} as ${fecha_emision_nameString},
                             ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString},

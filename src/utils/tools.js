@@ -20,7 +20,7 @@ export function obtenerNombreDelMes(numeroDelMes) {
     return fecha.format('MMMM');
 }
 
-function obtenerNumeroMes(fecha) {
+export function obtenerNumeroMes(fecha) {
       // Crear un objeto Moment a partir de la fecha
       let fechaMoment = moment(fecha, 'YYYY-MM-DD');
     
