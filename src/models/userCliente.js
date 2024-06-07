@@ -14,7 +14,7 @@ export default class UserCliente {
         try {
             const insertQuery = `
                 BEGIN
-                    INSERT INTO "dba"."usuarios_clientes" (user_id, cliente_id)
+                    INSERT INTO usuarios_clientes (user_id, cliente_id)
                     VALUES (?, ?);
                     SELECT @@IDENTITY AS 'ID';
                 END;

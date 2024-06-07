@@ -51,6 +51,49 @@ export const getAllConsultasByCliente = async (req, res) => {
     }
 };
 
+export const getAllConsultasByClienteAndRol = async (req, res) => {
+    try {
+        let cliente;
+        const rol_id = req.user.rol_id;
+        const { clienteId, rolId } = req.params;
+        let rol_final;
+
+
+        if (rol_id === 1 || rol_id === 2) {
+            cliente = await Cliente.findById(clienteId);
+            rol_final = rolId;
+        } else {
+            const user = await User.findById(req.user.id);
+            cliente = await Cliente.findById(user.cliente_id);
+            rol_final = rol_id;
+        }
+
+        const consultas = await Consulta.findByClienteIdAndRolId(cliente.id, rol_final);
+
+        if (consultas.length === 0) {
+            const jsonResponse = createJSONResponse(404, 'Consultas', { errors: ['No se encontraron consultas para este cliente y rol'] });
+            return res.status(404).json(jsonResponse);
+        }
+
+        for (const consulta of consultas) {
+            let dataParametros = await ConsultaParametros.findByTipoConsultaId(consulta.id);
+            if(dataParametros[0]?.column_reference_cliente){
+                cliente[dataParametros[0]?.column_reference_cliente];
+                dataParametros[0].column_reference_cliente_value = JSON.parse(cliente[dataParametros[0]?.column_reference_cliente]);
+            }
+            consulta.parametros = dataParametros;
+        }
+
+        const jsonResponse = createJSONResponse(200, 'Consultas obtenidas correctamente', consultas);
+        return res.status(200).json(jsonResponse);
+    } catch (error) {
+        console.error('Error al obtener las consultas del cliente y rol:', error);
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        return res.status(500).json(jsonResponse);
+    }
+};
+
+
 // Controlador para obtener todos los parametros de un cliente
 export const getAllParametros = async (req, res) => {
     try {        
@@ -71,7 +114,7 @@ export const getAllParametros = async (req, res) => {
 export const createConsultas = async (req, res) => {
     try {
         const { cliente_id } = req.params;
-
+        console.log(req.body);
         const consultasByname = await Consulta.findByClienteIdAndName(cliente_id, req.body.nombre_consulta);
 
         // Validar si consultasByname no tiene ningún elemento

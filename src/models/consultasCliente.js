@@ -124,6 +124,7 @@ export default class ConsultasCliente {
             }
         }
 
+        let order = '';
         let page = 1;
         let limit = 10;
         let offset = (page - 1) * limit + 1;
@@ -457,6 +458,14 @@ export default class ConsultasCliente {
             offset = queryParams.offset;
         }
 
+        if(queryParams.order == "DESC"){
+            order = "DESC";
+        }
+
+        if(queryParams.order == "ASC"){
+            order = "ASC";
+        }
+        
         let query = `SELECT TOP ${limit} START AT ${offset}
                             ${numero_control_nameParamBD} as ${numero_control_nameString},
                             ${numero_documento_nameParamBD} as ${numero_documento_nameString},
@@ -469,7 +478,7 @@ export default class ConsultasCliente {
                             '${this.cliente.rif}' as rif_prestador
                      FROM ${tabla}
                      WHERE ${whereClause}
-                     ORDER BY ${numero_control_nameParamBD}`;
+                     ORDER BY ${numero_control_nameParamBD} ${order}`;
         
         console.log(query, params);
         let result = await executeQuery(this.cliente.connections, query, params);
