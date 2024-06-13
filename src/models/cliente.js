@@ -18,6 +18,10 @@ export default class Cliente {
 
         this.url_prod = data.url_prod || null;
         this.url_qa = data.url_qa || null;
+
+        this.url_prod_anexos = data.url_prod_anexos || null;
+        this.url_qa_anexos = data.url_qa_anexos || null;
+
         this.name_bd_column_encrypt = data.name_bd_column_encrypt || null;
         this.name_bd_column_encrypt_others = data.name_bd_column_encrypt_others || null;
 
@@ -65,6 +69,9 @@ export default class Cliente {
 
         this.name_bd_column_correo_cliente = data.name_bd_column_correo_cliente || null; 
         this.name_bd_column_telefono_cliente = data.name_bd_column_telefono_cliente || null; 
+
+
+        this.name_bd_column_anexos = data.name_bd_column_anexos || null; 
         
     }
 
@@ -135,7 +142,7 @@ export default class Cliente {
     // Método para obtener todos los clientes que no han sido eliminados lógicamente
     static async getAll() {
         try {
-            const query = 'SELECT * FROM clientes WHERE enabled = 1 order by nombre_cliente';
+            const query = 'SELECT * FROM clientes WHERE enabled = 1 --order by nombre_cliente';
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
             return result;
         } catch (error) {

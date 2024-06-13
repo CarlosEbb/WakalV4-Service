@@ -122,14 +122,19 @@ export function codificar(cadena) {
 }
 
 export function buscarValorInArray(arr, value) {
-    let valor = value.replace(/^0+/, '')
+    // Convierte value a string y elimina ceros iniciales
+    let valor = value.toString().replace(/^0+/, '');
+
     for (var i = 0; i < arr.length; i++) {
-      var subArray = arr[i];
-      if (subArray.indexOf(valor) !== -1) {
-        return i; // Devuelve la posición del subarreglo donde se encontró el valor
-      }
+        var subArray = arr[i];
+        for (var j = 0; j < subArray.length; j++) {
+            // Convierte cada elemento a string y elimina ceros iniciales antes de comparar
+            if (subArray[j].toString().replace(/^0+/, '') === valor) {
+                return { subArrayIndex: i, elementIndex: j }; // Devuelve la posición exacta
+            }
+        }
     }
-    return null; // Devuelve -1 si el valor no se encuentra en ningún subarreglo
+    return null; // Devuelve null si el valor no se encuentra en ningún subarreglo
 }
 
 export function aplicarFormatoNrocontrol(numero, cant = 8) {

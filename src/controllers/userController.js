@@ -52,7 +52,25 @@ export const getUserById = async (req, res) => {
 const createUserSchema = Joi.object({
     email: Joi.string().email().max(150).required(),
    
-    password: Joi.string().min(6).max(15).required(),
+    password: Joi.string()
+    .min(6)
+    .message('La contraseña debe tener al menos 6 caracteres.')
+    .pattern(new RegExp('^(?=.*[a-z])'))
+    .message('La contraseña debe contener al menos una letra minúscula.')
+    .pattern(new RegExp('^(?=.*[A-Z])'))
+    .message('La contraseña debe contener al menos una letra mayúscula.')
+    .pattern(new RegExp('^(?=.*[0-9])'))
+    .message('La contraseña debe contener al menos un número.')
+    .pattern(new RegExp('^(?=.*[!@#$%^&*(),.?":{}|<>])'))
+    .message('La contraseña debe contener al menos un carácter especial.')
+    .required()
+    .messages({
+      'string.base': 'La contraseña debe ser un texto.',
+      'string.empty': 'La contraseña no puede estar vacía.',
+      'string.min': 'La contraseña debe tener al menos 6 caracteres.',
+      'string.pattern.base': 'La contraseña no cumple con los requisitos de complejidad.',
+      'any.required': 'La contraseña es un campo requerido.'
+    }),
     rol_id: Joi.number().integer(),
     nombre: Joi.string().max(150).required(),
     apellido: Joi.string().max(150).required(),
@@ -161,6 +179,25 @@ const updateUserSchema = Joi.object({
     cargo: Joi.string(),
     cod_area: Joi.string().min(4).max(4),
     username: Joi.string().required(),
+    
+    password: Joi.string()
+        .min(6)
+        .message('La contraseña debe tener al menos 6 caracteres.')
+        .pattern(new RegExp('^(?=.*[a-z])'))
+        .message('La contraseña debe contener al menos una letra minúscula.')
+        .pattern(new RegExp('^(?=.*[A-Z])'))
+        .message('La contraseña debe contener al menos una letra mayúscula.')
+        .pattern(new RegExp('^(?=.*[0-9])'))
+        .message('La contraseña debe contener al menos un número.')
+        .pattern(new RegExp('^(?=.*[!@#$%^&*(),.?":{}|<>])'))
+        .message('La contraseña debe contener al menos un carácter especial.')
+        .allow('')
+        .messages({
+            'string.base': 'La contraseña debe ser un texto.',
+            'string.empty': 'La contraseña no puede estar vacía.',
+            'string.min': 'La contraseña debe tener al menos 6 caracteres.',
+            'string.pattern.base': 'La contraseña no cumple con los requisitos de complejidad.'
+        })
 }).unknown();
 
 
@@ -185,6 +222,7 @@ export const updateUser = async (req, res) => {
         if ('email' in fieldsToUpdate) {
             const userEmail = fieldsToUpdate.email;
             const existingUser = await User.findByEmailOrUsername(userEmail);
+            
             if (existingUser) {
                 if (existingUser.id != userId) {
                     // El correo electrónico pertenece a otro usuario, no se puede actualizar

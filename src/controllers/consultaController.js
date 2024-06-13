@@ -154,7 +154,8 @@ export const deleteConsultas = async (req, res) => {
 
 export const getConsultasPDF = async (req, res) => {
     try {
-        const { token } = req.query;
+        const { token, anexos} = req.query;
+console.log(anexos);
         // Verificar si el token está en la lista de tokens inválidos
         const TokenInvalid = await isTokenInvalid(token);
 
@@ -202,11 +203,13 @@ export const getConsultasPDF = async (req, res) => {
             let control_view_pdf;
             let encrypt;
             let busqueda = buscarValorInArray(array, req.params.tipo_documento);
-            if(busqueda != null){
-                if(cliente.name_bd_column_tipo_documento_view_pdf_format != null){
-                    tipo_view_pdf = JSON.parse(cliente.name_bd_column_tipo_documento_view_pdf_format)[busqueda];
+            if (busqueda != null) {
+                if (cliente.name_bd_column_tipo_documento_view_pdf_format != null) {
+                    let jsonParsed = JSON.parse(cliente.name_bd_column_tipo_documento_view_pdf_format);
+                    tipo_view_pdf = jsonParsed[busqueda.subArrayIndex][busqueda.elementIndex];
                 }
             }
+            
             if(cliente.numero_control_view_pdf_format == 1){
                 if(cliente.id == 2 ){
                     control_view_pdf = aplicarFormatoNrocontrol(req.params.numero_control,7);
@@ -219,6 +222,7 @@ export const getConsultasPDF = async (req, res) => {
             
           
             encrypt = cliente.encrypt_url_format_order;
+            
             if(cliente.name_bd_column_encrypt != null){
                 if(req.params.encrypt){
                     encrypt = req.params.encrypt;
@@ -233,6 +237,7 @@ export const getConsultasPDF = async (req, res) => {
     
                 let funcionesAUsar = JSON.parse(cliente.encrypt_url_format);
 
+                console.log(encrypt);
                 if(funcionesAUsar != null){
                     funcionesAUsar.forEach(funcion => {
                         if (funcion === "base64") {
@@ -244,10 +249,19 @@ export const getConsultasPDF = async (req, res) => {
                 }
     
                 if(cliente.is_prod == "1"){
-                    url = cliente.url_prod;
+                    if(anexos){
+                        url = cliente.url_prod_anexos;
+                    }else{
+                        url = cliente.url_prod;
+                    }
                 }else{
-                    url = cliente.url_qa;
+                    if(anexos){
+                        url = cliente.url_qa_anexos;
+                    }else{
+                        url = cliente.url_qa;
+                    }
                 }
+               
                 url = url.replace("{{encrypt}}", encrypt);
                 
                 if(req.query.encrypt_others){

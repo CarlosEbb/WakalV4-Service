@@ -72,12 +72,15 @@ export default class ConsultasCliente {
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
         let url_documento;
+        let url_documento_anexos;
         let addSelect = '';
 
         if(this.cliente.is_prod == 1){
             url_documento = `'${this.cliente.url_prod}'`;
+            url_documento_anexos = `'${this.cliente.url_prod_anexos}'`;
         }else{
             url_documento = `'${this.cliente.url_qa}'`;
+            url_documento_anexos = `'${this.cliente.url_qa_anexos}'`;
         }
         
         if(this.cliente.name_bd_table_coletilla != null && (queryParams.numero_control || queryParams.numero_documento)){
@@ -220,6 +223,9 @@ export default class ConsultasCliente {
         
         let no_sujeto_nameParamBD = this.cliente.name_bd_column_monto_no_sujeto;
         let no_sujeto_nameString = "monto_no_sujeto";
+
+        let anexos_nameParamBD = this.cliente.name_bd_column_anexos;
+        let anexos_nameString = "anexos";
 
 
         if(queryParams.numero_control){
@@ -437,8 +443,9 @@ export default class ConsultasCliente {
 
             { paramBD: correo_cliente_nameParamBD, string: correo_cliente_nameString },
             { paramBD: telefono_cliente_nameParamBD, string: telefono_cliente_nameString },
+            { paramBD: anexos_nameParamBD, string: anexos_nameString },
         ];
-
+        
         // Recorrer el array de columnas y construir la cadena addSelect
         columnas.forEach(columna => {
             if (columna.paramBD !== null) {

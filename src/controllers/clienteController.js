@@ -1,6 +1,7 @@
 // clienteController.js
 
 import Cliente from '../models/cliente.js';
+import User from '../models/user.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
 import { limpiarObjeto, saveImage, deleteImage } from '../utils/tools.js';
 import Joi from 'joi';
@@ -88,8 +89,17 @@ export const createCliente = async (req, res) => {
 // Controlador para obtener un cliente por su ID
 export const getClienteById = async (req, res) => {
     try {
-        const clienteId = req.params.id;
-        const cliente = await Cliente.findById(clienteId);
+        
+        let cliente;
+        const rol_id = req.user.rol_id;
+        const cliente_id = req.params.id;
+        if (rol_id === 1 || rol_id === 2) {
+          cliente = await Cliente.findById(cliente_id);
+        } else {
+          const user = await User.findById(req.user.id);
+          cliente = await Cliente.findById(user.cliente_id);          
+        }
+
         if (cliente) {
             const jsonResponse = createJSONResponse(200, 'Cliente encontrado', cliente);
             return res.status(200).json(jsonResponse);

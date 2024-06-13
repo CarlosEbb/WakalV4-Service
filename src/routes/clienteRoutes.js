@@ -21,7 +21,7 @@ router.get('/', authMiddleware, checkRolePermissions([1, 2]), auditMiddleware, g
 router.post('/', authMiddleware, checkRolePermissions([1]), upload.single('logo'), auditMiddleware, createCliente);
 
 // Ruta para obtener un cliente por su ID
-router.get('/:id', authMiddleware, checkRolePermissions([1, 2]), auditMiddleware, getClienteById);
+router.get('/:id', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getClienteById);
 
 // Ruta para actualizar un cliente por su ID
 router.put('/:id', authMiddleware, checkRolePermissions([1]), upload.single('logo'), auditMiddleware, updateCliente);
