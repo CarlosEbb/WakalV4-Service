@@ -74,16 +74,18 @@ export const getAllConsultasByClienteAndRol = async (req, res) => {
             const jsonResponse = createJSONResponse(404, 'Consultas', { errors: ['No se encontraron consultas para este cliente y rol'] });
             return res.status(404).json(jsonResponse);
         }
-
+        
         for (const consulta of consultas) {
             let dataParametros = await ConsultaParametros.findByTipoConsultaId(consulta.id);
-            if(dataParametros[0]?.column_reference_cliente){
-                cliente[dataParametros[0]?.column_reference_cliente];
-                dataParametros[0].column_reference_cliente_value = JSON.parse(cliente[dataParametros[0]?.column_reference_cliente]);
+            
+            for (let parametro of dataParametros) {
+                if(parametro?.column_reference_cliente){
+                    parametro.column_reference_cliente_value = JSON.parse(cliente[parametro?.column_reference_cliente]);
+                }
             }
             consulta.parametros = dataParametros;
-        }
-
+        }        
+       
         const jsonResponse = createJSONResponse(200, 'Consultas obtenidas correctamente', consultas);
         return res.status(200).json(jsonResponse);
     } catch (error) {
@@ -155,7 +157,7 @@ export const deleteConsultas = async (req, res) => {
 export const getConsultasPDF = async (req, res) => {
     try {
         const { token, anexos} = req.query;
-console.log(anexos);
+
         // Verificar si el token está en la lista de tokens inválidos
         const TokenInvalid = await isTokenInvalid(token);
 
@@ -202,6 +204,7 @@ console.log(anexos);
             let tipo_view_pdf = req.params.tipo_documento;
             let control_view_pdf;
             let encrypt;
+            let status;
             let busqueda = buscarValorInArray(array, req.params.tipo_documento);
             if (busqueda != null) {
                 if (cliente.name_bd_column_tipo_documento_view_pdf_format != null) {
@@ -228,10 +231,12 @@ console.log(anexos);
                     encrypt = req.params.encrypt;
                 }
             }
+
             if(encrypt != null){
 
                 encrypt = encrypt.replace("{{tipo_documento}}", (tipo_view_pdf ? tipo_view_pdf : ""));
                 encrypt = encrypt.replace("{{numero_control}}", (control_view_pdf ? control_view_pdf : ""));
+                encrypt = encrypt.replace("{{numero_control_format}}", (aplicarFormatoNrocontrol(control_view_pdf) ? aplicarFormatoNrocontrol(control_view_pdf) : ""));
                 encrypt = encrypt.replace("{{numero_documento}}", (req.params.numero_documento ? req.params.numero_documento : ""));
                 encrypt = encrypt.replace("{{mes}}", (req.params.mes ? req.params.mes : ""));
     
@@ -263,7 +268,8 @@ console.log(anexos);
                 }
                
                 url = url.replace("{{encrypt}}", encrypt);
-                
+                url = url.replace("{{status}}", (req.query.status ? req.query.status : "0"));
+
                 if(req.query.encrypt_others){
                     url = url.replace("{{ruta_url}}", req.query.encrypt_others);
                 }

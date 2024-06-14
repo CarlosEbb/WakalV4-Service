@@ -50,6 +50,8 @@ export default class Cliente {
         this.name_bd_column_codigo_operacion = data.name_bd_column_codigo_operacion || null;
         this.name_bd_column_codigo_operacion_format = data.name_bd_column_codigo_operacion_format || null;
 
+        this.name_bd_column_codigo_suscriptor = data.name_bd_column_codigo_suscriptor || null;
+
         this.name_bd_column_serie = data.name_bd_column_serie || null;
         this.name_bd_column_serie_format = data.name_bd_column_serie_format || null; 
 
