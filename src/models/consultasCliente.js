@@ -185,6 +185,10 @@ export default class ConsultasCliente {
         }
         let codigo_operacion_nameString = "codigo_operacion";
 
+        let codigo_suscriptor;
+        let codigo_suscriptor_nameParamBD = this.cliente.name_bd_column_codigo_suscriptor;
+        let codigo_suscriptor_nameString = "codigo_suscriptor";
+
         let hora_emision_nameParamBD = this.cliente.name_bd_column_hora_emision;
         let hora_emision_nameString = "hora_emision";
 
@@ -248,6 +252,40 @@ export default class ConsultasCliente {
             }else{
                 whereClause += `${numero_control_nameParamBD} BETWEEN ? AND ?`;
             }
+        }
+
+        if(queryParams.numero_control){
+            numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
+            let cantidad_mostrar = 10;
+            if(queryParams.especifico_check){
+                cantidad_mostrar = 0;
+            }
+            params.push(numero_control - cantidad_mostrar); 
+            
+            if(!queryParams.especifico_check){
+                params.push(numero_control + cantidad_mostrar);
+            }
+            if (whereClause !== '') {
+                whereClause += ' OR ';
+            }
+
+            if(queryParams.especifico_check){
+                whereClause += `${numero_control_nameParamBD} = ?`;
+            }else{
+                whereClause += `${numero_control_nameParamBD} BETWEEN ? AND ?`;
+            }
+        }
+
+        if(queryParams.codigo_suscriptor){
+            codigo_suscriptor = queryParams.codigo_suscriptor;
+            
+            params.push(codigo_suscriptor); 
+            
+            if (whereClause !== '') {
+                whereClause += ' OR ';
+            }
+
+            whereClause += `${codigo_suscriptor_nameParamBD} = ?`;
         }
         
         if(queryParams.numero_documento){
@@ -435,6 +473,7 @@ export default class ConsultasCliente {
             { paramBD: encrypt_others_nameParamBD, string: encrypt_others_nameString },
             { paramBD: codigo_operacion_nameParamBD, string: codigo_operacion_nameString },
             { paramBD: serie_nameParamBD, string: serie_nameString },
+            { paramBD: codigo_suscriptor_nameParamBD, string: codigo_suscriptor_nameString },
             { paramBD: hora_emision_nameParamBD, string: hora_emision_nameString },
             { paramBD: status_nameParamBD, string: status_nameString },
             { paramBD: motivo_anulacion_nameParamBD, string: motivo_anulacion_nameString },
