@@ -27,7 +27,7 @@ app.use(compression());
 // Habilitar CORS para todas las rutas
 // Configuración de CORS
 app.use(cors({
-    origin: ['http://localhost:8002','https://wsplusqa.solucioneslaser.com/', 'https://wakalplusqa.solucioneslaser.com/'],
+    origin: ['http://localhost:8002','http://localhost:8002','https://wsplusqa.solucioneslaser.com/', 'https://wakalplusqa.solucioneslaser.com/'],
     methods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));

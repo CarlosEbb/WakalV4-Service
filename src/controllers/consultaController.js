@@ -5,7 +5,7 @@ import { createJSONResponse } from '../utils/responseUtils.js';
 import Cliente from '../models/cliente.js';
 import User from '../models/user.js';
 import { isTokenInvalid } from '../utils/tokenUtils.js';
-import { buscarValorInArray, aplicarFormatoNrocontrol, codificar } from '../utils/tools.js';
+import { buscarValorInArray, aplicarFormatoNrocontrol, codificar, convertDateTime } from '../utils/tools.js';
 import jwt from 'jsonwebtoken';
 
 // Controlador para obtener todas las consultas de un cliente
@@ -21,6 +21,7 @@ export const getAllConsultasByCliente = async (req, res) => {
           const user = await User.findById(req.user.id);
           cliente = await Cliente.findById(user.cliente_id);          
         }
+       
         // Obtener todas las consultas del cliente
         const consultas = await Consulta.findByClienteId(cliente.id);
 
@@ -42,7 +43,7 @@ export const getAllConsultasByCliente = async (req, res) => {
         }
 
         // Retornar las consultas con sus parámetros en el response
-        const jsonResponse = createJSONResponse(200, 'Consultas obtenidas correctamente', consultas);
+        const jsonResponse = createJSONResponse(200, 'Consultas obtenidas correctamente', consultas, {created_at: convertDateTime(cliente.created_at, 'YYYY-MM-DD')});
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al obtener las consultas del cliente:', error);
@@ -86,7 +87,7 @@ export const getAllConsultasByClienteAndRol = async (req, res) => {
             consulta.parametros = dataParametros;
         }        
        
-        const jsonResponse = createJSONResponse(200, 'Consultas obtenidas correctamente', consultas);
+        const jsonResponse = createJSONResponse(200, 'Consultas obtenidas correctamente', consultas, {created_at: convertDateTime(cliente.created_at, 'YYYY-MM-DD')});
         return res.status(200).json(jsonResponse);
     } catch (error) {
         console.error('Error al obtener las consultas del cliente y rol:', error);

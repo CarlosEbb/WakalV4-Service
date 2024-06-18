@@ -107,4 +107,16 @@ export const getDataBusqueda = async (req, res) => {
   }
 };
 
+export const getDataPDF = async (req, res) => {
+  try {
+     
+      const jsonResponse = createJSONResponse(200, 'Nro control obtenido correctamente', {});
+      return res.status(200).json(jsonResponse);
+  } catch (error) {
+      console.error('Error al obtener Nro control:', error);
+      const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+      return res.status(500).json(jsonResponse);
+  }
+};
+
 
