@@ -74,6 +74,7 @@ export default class Cliente {
 
 
         this.name_bd_column_anexos = data.name_bd_column_anexos || null; 
+        this.name_bd_column_tipo_war = data.name_bd_column_tipo_war || null; 
         
     }
 

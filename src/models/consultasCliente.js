@@ -192,6 +192,9 @@ export default class ConsultasCliente {
         let hora_emision_nameParamBD = this.cliente.name_bd_column_hora_emision;
         let hora_emision_nameString = "hora_emision";
 
+        let tipo_war_nameParamBD = this.cliente.name_bd_column_tipo_war;
+        let tipo_war_nameString = "tipo_war";
+
 
         let status_nameParamBD = this.cliente.name_bd_column_status;
         let status_nameString = "status";
@@ -483,6 +486,7 @@ export default class ConsultasCliente {
             { paramBD: correo_cliente_nameParamBD, string: correo_cliente_nameString },
             { paramBD: telefono_cliente_nameParamBD, string: telefono_cliente_nameString },
             { paramBD: anexos_nameParamBD, string: anexos_nameString },
+            { paramBD: tipo_war_nameParamBD, string: tipo_war_nameString },
         ];
         
         // Recorrer el array de columnas y construir la cadena addSelect

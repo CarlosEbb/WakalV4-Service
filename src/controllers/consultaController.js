@@ -156,8 +156,8 @@ export const deleteConsultas = async (req, res) => {
 
 export const getConsultasPDF = async (req, res) => {
     try {
-        const { token, anexos} = req.query;
-
+        const { token, anexos, tipo_war} = req.query;
+        
         // Verificar si el token está en la lista de tokens inválidos
         const TokenInvalid = await isTokenInvalid(token);
 
@@ -269,6 +269,7 @@ export const getConsultasPDF = async (req, res) => {
                
                 url = url.replace("{{encrypt}}", encrypt);
                 url = url.replace("{{status}}", (req.query.status ? req.query.status : "0"));
+                url = url.replace("{{tipo_war}}", (req.query.tipo_war ? req.query.tipo_war : ""));
 
                 if(req.query.encrypt_others){
                     url = url.replace("{{ruta_url}}", req.query.encrypt_others);
