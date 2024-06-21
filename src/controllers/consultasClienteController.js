@@ -173,7 +173,7 @@ export const getDataExcel = async (req, res) => {
         titulo: 'REPORTE  NUMEROS DE CONTROL MARZO 2024',
         subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
         tituloAdicional: 'FACTURA SERVICIO: 00044562',
-        logo: "../public/img/logo.png",
+        logo: "../public/img/logo.jpg",
       }
       const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
       const workbook = await createExcel(html, config);
@@ -199,7 +199,7 @@ export const getDataPDF = async (req, res) => {
       titulo: 'Reporte Detallado Nros. de Control Asignados Providencia 0032 Art.28',
       subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
       tituloAdicional: 'FACTURA SERVICIO: 00044562',
-      logo: "../public/img/banner_reporte.png",
+      logo: "../public/img/banner_reporte.jpg",
       pageOrientation: "Landscape",
     }
     const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';

@@ -4,6 +4,7 @@ import cheerio from 'cheerio';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { PDFDocument } from 'pdf-lib';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,7 +37,7 @@ export const createPDF = async (htmlString, config = {}) => {
             ]
           },
           layout: 'noBorders',
-          margin: [0, -60, 0, 0] // Ajustar el margen para que la tabla se superponga a la imagen
+          margin: [0, -60, 0, 0]
         },
       ],
     },
@@ -73,11 +74,11 @@ export const createPDF = async (htmlString, config = {}) => {
     },
     pageMargins: [30, 100, 30, 30],
     info: {
-      title: 'Reporte',
-      author: 'Soluciones Laser C.A ',
-      subject: 'Sistema automatizado Wakal 4.0',
-      keywords: 'documento, reporte, wakal, imprenta, digital',
-      creator: 'Wakal 4.0'
+      title: process.env.PDF_GENERATOR_TITLE,
+      author: process.env.PDF_GENERATOR_AUTHOR,
+      subject: process.env.PDF_GENERATOR_SUBJECT,
+      keywords: process.env.PDF_GENERATOR_KEYWORDS,
+      creator: process.env.PDF_GENERATOR_CREATOR
     }
   };
 
@@ -172,12 +173,23 @@ export const createPDF = async (htmlString, config = {}) => {
   docDefinition.content.push({ table });
 
   const pdfDoc = pdfMake.createPdf(docDefinition);
-
   return new Promise((resolve, reject) => {
-    pdfDoc.getBuffer((buffer) => {
-      resolve(buffer);
+    pdfDoc.getBuffer(async (buffer) => {
+      try {
+        if (process.env.PDF_GENERATOR_PROVEEDOR_ACTIVO === 'true') {
+          const pdfDocLib = await PDFDocument.load(buffer);
+          pdfDocLib.setProducer(process.env.PDF_GENERATOR_PROVEEDOR); // Cambiar el campo Producer
+          const modifiedPdfBytes = await pdfDocLib.save();
+          resolve(Buffer.from(modifiedPdfBytes));
+        } else {
+          resolve(buffer);
+        }
+      } catch (error) {
+        reject(error);
+      }
     });
   });
+
 };
 
 function processHtml(html) {
