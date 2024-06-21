@@ -2,7 +2,8 @@ import Cliente from '../models/cliente.js';
 import User from '../models/user.js';
 import ConsultasCliente from '../models/consultasCliente.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
-import { createExcel} from '../utils/pdfGenerator.js';
+import { createExcel} from '../utils/excelGenerator.js';
+import { createPDF} from '../utils/pdfGenerator.js';
 // Método para obtener todos los documentos emitidos desde origen
 export const getTotalEmitidos = async (req, res) => {
     try {
@@ -107,8 +108,7 @@ export const getDataBusqueda = async (req, res) => {
   }
 };
 
-export const getDataPDF = async (req, res) => {
-  try {
+
       // Datos de la tabla
       const html = `
                 <table border="1">
@@ -186,6 +186,8 @@ export const getDataPDF = async (req, res) => {
 
             `;
 
+export const getDataExcel = async (req, res) => {
+  try {
       // Generar Excel
       const config = {
         titulo: 'REPORTE  NUMEROS DE CONTROL MARZO 2024',
@@ -205,7 +207,32 @@ export const getDataPDF = async (req, res) => {
       //return res.status(200).json({});
 
   } catch (error) {
-      console.error('Error al obtener Nro control:', error);
+      console.error('Error al generar reporte en excel:', error);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const getDataPDF = async (req, res) => {
+  try {
+      const config = {
+        titulo: 'REPORTE  NUMEROS DE CONTROL MARZO 2024',
+        subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
+        tituloAdicional: 'FACTURA SERVICIO: 00044562',
+        logo: "../public/img/logo.png",
+      }
+      const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+      const workbook = await createPDF(html, config);
+      // respuesta de descarga
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
+
+      await workbook.xlsx.write(res);
+      res.end();
+
+      //return res.status(200).json({});
+
+  } catch (error) {
+      console.error('Error al generar reporte en PDF:', error);
       return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

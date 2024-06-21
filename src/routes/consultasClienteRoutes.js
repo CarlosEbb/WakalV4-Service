@@ -1,7 +1,7 @@
 //userRoutes.js
 import express from 'express';
 const router = express.Router();
-import {getTotalEmitidos, getTotalMes, getTotalEmitidosSemanal, getDataBusqueda, getDataPDF} from '../controllers/consultasClienteController.js';
+import {getTotalEmitidos, getTotalMes, getTotalEmitidosSemanal, getDataBusqueda, getDataExcel, getDataPDF} from '../controllers/consultasClienteController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import checkRolePermissions from '../middlewares/checkRolePermissions.js';
 import auditMiddleware from '../middlewares/auditMiddleware.js';
@@ -13,5 +13,6 @@ router.get('/:cliente_id/getTotalEmitidosSemanal/:year/:month', authMiddleware, 
 //router.get('/:cliente_id/getTotalCorreos', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getTotalCorreos);
 router.get('/:cliente_id/getDataBusqueda', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getDataBusqueda);
 router.get('/:cliente_id/getDataPDF', getDataPDF);
+router.get('/:cliente_id/getDataExcel', getDataExcel);
 
 export default router;
