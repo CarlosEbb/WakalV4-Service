@@ -195,10 +195,18 @@ export const getDataExcel = async (req, res) => {
 export const getDataPDF = async (req, res) => {
   try {
    
-    const pdfBuffer = await createPDF(html);
+    const config = {
+      titulo: 'Reporte Detallado Nros. de Control Asignados Providencia 0032 Art.28',
+      subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
+      tituloAdicional: 'FACTURA SERVICIO: 00044562',
+      logo: "../public/img/banner_reporte.png",
+      pageOrientation: "Landscape",
+    }
+    const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+    const pdfBuffer = await createPDF(html, config);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=reporte.pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
     res.end(pdfBuffer, 'binary');
   } catch (error) {
     console.error('Error al generar reporte en PDF:', error);
