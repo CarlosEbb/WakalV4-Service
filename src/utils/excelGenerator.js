@@ -37,12 +37,14 @@ const blackBoldContend = {
 const MAX_COLUMN_WIDTH = 15; // Define el ancho máximo para las columnas
 
 export const createExcel = async (htmlString, config = {}) => {
+  if (!htmlString) throw new Error('HTML string is required');
+
   const { titulo, subtitulo, tituloAdicional, logo } = config;
   
   const workbook = new Excel.Workbook();
   const sheet = workbook.addWorksheet('Reporte');
 
-  if(logo){
+  if (logo) {
     // Añadir una imagen
     const imageId = workbook.addImage({
       filename: path.resolve(__dirname, logo),
@@ -56,14 +58,12 @@ export const createExcel = async (htmlString, config = {}) => {
   }
 
   const $ = cheerio.load(htmlString);
-  // Definir el estilo de alineación
   const alignmentStyle = {
     vertical: 'middle',
     horizontal: 'center',
     wrapText: true
   };
 
-  // Definir el estilo de borde
   const borderStyle = {
     top: { style: 'thin' },
     left: { style: 'thin' },
@@ -73,14 +73,13 @@ export const createExcel = async (htmlString, config = {}) => {
 
   let currentRow = 7;
   let currentColglobal = 2;
-  
-  if(!titulo && !subtitulo && !tituloAdicional && !logo){
+
+  if (!titulo && !subtitulo && !tituloAdicional && !logo) {
     currentRow = 1;
     currentColglobal = 1;
   }
 
   let maxWidth = 0;
-  let maxColIndex = 1;
   const columnWidths = [];
 
   $('table tr').each((i, tr) => {
@@ -88,19 +87,15 @@ export const createExcel = async (htmlString, config = {}) => {
     let colCount = 0;
 
     $(tr).children().each((j, td) => {
-      // Saltar celdas que ya están cubiertas por un rowspan o colspan anterior
       while (sheet.getCell(currentRow, currentCol).value !== null) {
         currentCol++;
       }
 
       const cell = sheet.getCell(currentRow, currentCol);
       cell.value = $(td).text();
-
-      // Aplicar el estilo de alineación y borde a la celda
       cell.alignment = alignmentStyle;
       cell.border = borderStyle;
 
-      // Si la fila pertenece al thead, aplicar estilos especiales
       if ($(tr).parent().is('thead')) {
         cell.fill = {
           type: 'pattern',
@@ -108,8 +103,7 @@ export const createExcel = async (htmlString, config = {}) => {
           fgColor: { argb: backgroundColor }
         };
         cell.font = whiteBold;
-      
-        // Registrar el ancho de la columna basado en el contenido
+
         const cellValueLength = cell.value.length;
         if (!columnWidths[currentCol - 1] || cellValueLength > columnWidths[currentCol - 1]) {
           columnWidths[currentCol - 1] = Math.min(cellValueLength, MAX_COLUMN_WIDTH);
@@ -122,11 +116,9 @@ export const createExcel = async (htmlString, config = {}) => {
         };
         cell.font = whiteBold;
       } else {
-        // Aplicar color gris si no es ni thead ni tfoot
-        cell.font = blackBoldContend; // Puedes cambiar el estilo de la fuente según sea necesario
+        cell.font = blackBoldContend;
       }
 
-      // Configurar celdas combinadas basadas en rowspan y colspan
       const rowspan = $(td).attr('rowspan');
       const colspan = $(td).attr('colspan') ? parseInt($(td).attr('colspan')) : 1;
       colCount += colspan;
@@ -136,7 +128,6 @@ export const createExcel = async (htmlString, config = {}) => {
         const endCol = currentCol + colspan - 1;
         sheet.mergeCells(currentRow, currentCol, endRow, endCol);
 
-        // Aplicar el estilo de alineación y borde a las celdas combinadas
         for (let r = currentRow; r <= endRow; r++) {
           for (let c = currentCol; c <= endCol; c++) {
             const mergedCell = sheet.getCell(r, c);
@@ -170,7 +161,7 @@ export const createExcel = async (htmlString, config = {}) => {
 
   const totalCenter = 4 + maxWidth;
 
-  if(titulo){
+  if (titulo) {
     const cell56 = sheet.getCell(2, 5);
     cell56.value = titulo;
     sheet.mergeCells(2, 5, 2, totalCenter);
@@ -178,7 +169,7 @@ export const createExcel = async (htmlString, config = {}) => {
     cell56.alignment = alignmentStyle;
   }
 
-  if(subtitulo){
+  if (subtitulo) {
     const cell66 = sheet.getCell(3, 5);
     cell66.value = subtitulo;
     sheet.mergeCells(3, 5, 3, totalCenter);
@@ -186,33 +177,28 @@ export const createExcel = async (htmlString, config = {}) => {
     cell66.alignment = alignmentStyle;
   }
 
-  if(tituloAdicional){
-    const cellNroFact = sheet.getCell(2, 2 + (totalCenter));
+  if (tituloAdicional) {
+    const cellNroFact = sheet.getCell(2, 2 + totalCenter);
     cellNroFact.value = tituloAdicional;
     cellNroFact.alignment = alignmentStyle;
-  
-    // Definir el estilo de relleno con el color deseado
+
     cellNroFact.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: backgroundColor } // El color en formato ARGB
+      fgColor: { argb: backgroundColor }
     };
-  
+
     cellNroFact.font = whiteBold;
-  
-    // Aplicar el estilo de borde a la celda combinada
-    sheet.mergeCells(2, 2 + (totalCenter), 3, 3 + (totalCenter));
-    const range = sheet.getCell(5, 2 + (totalCenter));
+    sheet.mergeCells(2, 2 + totalCenter, 3, 3 + totalCenter);
+    const range = sheet.getCell(5, 2 + totalCenter);
     range.border = borderStyle;
   }
 
-  //Establecer el ancho de las columnas
   sheet.columns.forEach((column, index) => {
     if (columnWidths[index]) {
-      column.width = columnWidths[index] + 2; // Ajustar el valor según sea necesario
+      column.width = columnWidths[index] + 2;
     }
   });
 
-  //console.log(maxWidth);
   return workbook;
 };
