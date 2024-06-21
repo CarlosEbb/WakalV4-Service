@@ -12,6 +12,6 @@ router.get('/:cliente_id/getTotalMes/:year/:month', authMiddleware, checkRolePer
 router.get('/:cliente_id/getTotalEmitidosSemanal/:year/:month', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getTotalEmitidosSemanal);
 //router.get('/:cliente_id/getTotalCorreos', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getTotalCorreos);
 router.get('/:cliente_id/getDataBusqueda', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getDataBusqueda);
-router.post('/:cliente_id/getDataPDF', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getDataPDF);
+router.get('/:cliente_id/getDataPDF', getDataPDF);
 
 export default router;

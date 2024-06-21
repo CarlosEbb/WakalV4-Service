@@ -14,8 +14,15 @@ import clienteRoutes from './routes/clienteRoutes.js';
 import consultaRoutes from './routes/consultaRoutes.js';
 import consultasClienteRoutes from './routes/consultasClienteRoutes.js';
 
+
 import {createJSONResponse} from './utils/responseUtils.js';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 const app = express();
@@ -31,6 +38,9 @@ app.use(cors({
     methods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Middleware para servir archivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 // Hacer que la carpeta 'uploads' sea pública
