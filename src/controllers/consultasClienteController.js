@@ -111,77 +111,57 @@ export const getDataBusqueda = async (req, res) => {
 
       // Datos de la tabla
       const html = `
-                <table border="1">
-   <thead>
-      <tr class="row0">
-        <td class="column0 style1 s style5" rowspan="2">SERIE</td>
-        <td class="column1 style2 s style6" rowspan="2">CANTIDAD CTRL PRECOMPRADOS</td>
-        <td class="column2 style2 s style6" rowspan="2">FECHA  DE ASIGNACION PIE PAGINA</td>
-        <td class="column3 style2 s style6" rowspan="2">IDENT. NRO. </td>
-        <td class="column4 style3 s style4" colspan="2">RANGOS PIE DE PAGINA</td>
-        <td class="column6 style3 s style4" colspan="2">CANTIDAD CONTROL ASIGNADOS</td>
-        <td class="column8 style2 s style6" rowspan="2">CANTIDAD CTRL ASIGNADOS</td>
-      </tr>
-
-      <tr class="row1">
-        <td class="column4 style7 s">NRO CTRL INICIO</td>
-        <td class="column5 style7 s">NRO CTRL FINAL</td>
-        <td class="column6 style8 s">NRO CTRL INICIO</td>
-        <td class="column7 style8 s">NRO CTRL FINAL</td>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="row18">
-        <td class="column0 style9 s">G</td>
-        <td class="column1 style9 n">1,200</td>
-        <td class="column2 style10 n">3/1/2024</td>
-        <td class="column3 style9 s">0</td>
-        <td class="column4 style9 f">17,046,451</td>
-        <td class="column5 style9 f">17,047,650</td>
-        <td class="column6 style9 f">17,046,451</td>
-        <td class="column7 style9 n">17,046,460</td>
-        <td class="column8 style9 f">10</td>
-      </tr>
-      <tr class="row19">
-        <td class="column0 style9 s">F</td>
-        <td class="column1 style9 n">1,000</td>
-        <td class="column2 style10 n">3/1/2024</td>
-        <td class="column3 style9 s">0</td>
-        <td class="column4 style9 f">17,047,651</td>
-        <td class="column5 style9 f">17,048,650</td>
-        <td class="column6 style9 f">17,047,651</td>
-        <td class="column7 style9 n">17,047,967</td>
-        <td class="column8 style9 f">317</td>
-      </tr>
-      <tr class="row20">
-        <td class="column0 style11 null"></td>
-        <td class="column1 style12 null"></td>
-        <td class="column2 style13 null"></td>
-        <td class="column3 style11 null"></td>
-        <td class="column4 style11 null"></td>
-        <td class="column5 style11 null"></td>
-        <td class="column6 style11 null"></td>
-        <td class="column7 style11 null"></td>
-        <td class="column8 style9 null"></td>
-      </tr>
-    </tbody>
-    <tfoot>
-      <tr class="row21">
-        <td class="column0 style14 s">TOTALES</td>
-        <td class="column1 style15 f">383,700</td>
-        <td class="column2 style14 null"></td>
-        <td class="column3 style16 null"></td>
-        <td class="column4 style16 null"></td>
-        <td class="column5 style16 null"></td>
-        <td class="column6 style16 null"></td>
-        <td class="column7 style17 null"></td>
-        <td class="column8 style15 f">21,626</td>
-      </tr>
-    </tfoot>
-    
+          <table>
+  <thead>
+     <tr>
+       <td rowspan="2">SERIE</td>
+       <td rowspan="2">CANTIDAD CTRL PRECOMPRADOS</td>
+       <td rowspan="2">FECHA  DE ASIGNACION PIE PAGINA</td>
+       <td rowspan="2">IDENT. NRO. </td>
+       <td colspan="2">RANGOS PIE DE PAGINA</td>
+       <td colspan="2">CANTIDAD CONTROL ASIGNADOS</td>
+       <td rowspan="2">CANTIDAD CTRL ASIGNADOS</td>
+     </tr>
+     <tr>
+       <tdhidden>4</tdhidden>
+       <td>NRO CTRL INICIO</td>
+       <td>NRO CTRL FINAL</td>
+       <td>NRO CTRL INICIO</td>
+       <td>NRO CTRL FINAL</td>
+     </tr>
+   </thead>
+   <tbody>
+     <tr>
+       <td>G</td>
+       <td>1,200</td>
+       <td>3/1/2024</td>
+       <td>0</td>
+       <td>17,046,451</td>
+       <td>17,047,650</td>
+       <td>17,046,451</td>
+       <td>17,046,460</td>
+       <td>10</td>
+     </tr>
+     <tr>
+       <td>F</td>
+       <td>1,000</td>
+       <td>3/1/2024</td>
+       <td>0</td>
+       <td>17,047,651</td>
+       <td>17,048,650</td>
+       <td>17,047,651</td>
+       <td>17,047,967</td>
+       <td>317</td>
+     </tr>
+   </tbody>
+   <tfoot>
+     <tr>
+       <td colspan="9">TOTALES</td>
+       
+     </tr>
+   </tfoot>
+   
 </table>
-</body>
-</html>
 
 
             `;
@@ -214,25 +194,14 @@ export const getDataExcel = async (req, res) => {
 
 export const getDataPDF = async (req, res) => {
   try {
-      const config = {
-        titulo: 'REPORTE  NUMEROS DE CONTROL MARZO 2024',
-        subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
-        tituloAdicional: 'FACTURA SERVICIO: 00044562',
-        logo: "../public/img/logo.png",
-      }
-      const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-      const workbook = await createPDF(html, config);
-      // respuesta de descarga
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
+   
+    const pdfBuffer = await createPDF(html);
 
-      await workbook.xlsx.write(res);
-      res.end();
-
-      //return res.status(200).json({});
-
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=reporte.pdf');
+    res.end(pdfBuffer, 'binary');
   } catch (error) {
-      console.error('Error al generar reporte en PDF:', error);
-      return res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error al generar reporte en PDF:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
