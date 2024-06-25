@@ -166,6 +166,16 @@ export const getDataBusqueda = async (req, res) => {
 
             `;
 
+               
+let content = {
+  columns: ['columna 1', 'columna 2', 'columna 3'],
+  body: [
+    ['contenido 1', 'contenido 2', 'contenido 3'],
+    ['contenido 1', 'contenido 2', 'contenido 3'],
+    ['contenido 1', 'contenido 2', 'contenido 3'],
+  ],
+}; 
+
 export const getDataExcel = async (req, res) => {
   try {
       // Generar Excel
@@ -176,7 +186,7 @@ export const getDataExcel = async (req, res) => {
         logo: "../public/img/logo.jpg",
       }
       const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-      const workbook = await createExcel(html, config);
+      const workbook = await createExcel(content, config);
       // respuesta de descarga
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
@@ -194,16 +204,19 @@ export const getDataExcel = async (req, res) => {
 
 export const getDataPDF = async (req, res) => {
   try {
-   
+
+
     const config = {
       titulo: 'Reporte Detallado Nros. de Control Asignados Providencia 0032 Art.28',
       subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
-      tituloAdicional: 'FACTURA SERVICIO: 00044562',
+      tituloAdicional: 'Total Numeros de Controles Asignados: 20',
+      tituloAdicional2: "Factura 4456",
       logo: "../public/img/banner_reporte.jpg",
-      pageOrientation: "Landscape",
+      //pageOrientation: "Landscape",
+      
     }
     const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-    const pdfBuffer = await createPDF(html, config);
+    const pdfBuffer = await createPDF(content , config);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);

@@ -6,7 +6,11 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const backgroundColor = 'FF2F75B5';
+const backgroundColor = 'FF1251a0';//FF2F75B5
+
+const backgroundColor1 = 'FF85b71a'; // Primer color de fondo
+const backgroundColor2 = 'FF1251a0'; // Segundo color de fondo
+
 const fontColorWhite = 'FFFFFFFF';
 const whiteBold = {
   color: { argb: fontColorWhite },
@@ -36,8 +40,30 @@ const blackBoldContend = {
 
 const MAX_COLUMN_WIDTH = 15; // Define el ancho máximo para las columnas
 
-export const createExcel = async (htmlString, config = {}) => {
-  if (!htmlString) throw new Error('HTML string is required');
+export const createExcel = async (content, config = {}) => {
+  if (!content) throw new Error('Content es requerido');
+
+  let html = true; // Por defecto asumimos que es HTML
+
+  if (typeof content === 'string') {
+    // Verificamos si es una cadena que podría ser HTML
+    const trimmedContent = content.trim();
+    if (trimmedContent.startsWith('<') && trimmedContent.endsWith('>')) {
+      html = true;
+    } else {
+      html = false;
+    }
+  } else if (typeof content === 'object' && !Array.isArray(content)) {
+    // Verificamos si es un objeto (JSON)
+    // Validamos que tenga las propiedades esperadas: columns y body
+    if (content.columns && content.body && Array.isArray(content.columns) && Array.isArray(content.body)) {
+      html = false;
+    } else {
+      throw new Error('El objeto JSON content no tiene la estructura esperada');
+    }
+  } else {
+    throw new Error('El tipo de contenido no es válido');
+  }
 
   const { titulo, subtitulo, tituloAdicional, logo } = config;
   
@@ -57,7 +83,6 @@ export const createExcel = async (htmlString, config = {}) => {
     });
   }
 
-  const $ = cheerio.load(htmlString);
   const alignmentStyle = {
     vertical: 'middle',
     horizontal: 'center',
@@ -82,76 +107,119 @@ export const createExcel = async (htmlString, config = {}) => {
   let maxWidth = 0;
   const columnWidths = [];
 
-  $('table tr').each((i, tr) => {
-    let currentCol = currentColglobal;
-    let colCount = 0;
+  if(html){
+    const $ = cheerio.load(content);
 
-    $(tr).children().each((j, td) => {
-      while (sheet.getCell(currentRow, currentCol).value !== null) {
-        currentCol++;
-      }
-
-      const cell = sheet.getCell(currentRow, currentCol);
-      cell.value = $(td).text();
-      cell.alignment = alignmentStyle;
-      cell.border = borderStyle;
-
-      if ($(tr).parent().is('thead')) {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: backgroundColor }
-        };
-        cell.font = whiteBold;
-
-        const cellValueLength = cell.value.length;
-        if (!columnWidths[currentCol - 1] || cellValueLength > columnWidths[currentCol - 1]) {
-          columnWidths[currentCol - 1] = Math.min(cellValueLength, MAX_COLUMN_WIDTH);
+    $('table tr').each((i, tr) => {
+      let currentCol = currentColglobal;
+      let colCount = 0;
+  
+      $(tr).children().each((j, td) => {
+        while (sheet.getCell(currentRow, currentCol).value !== null) {
+          currentCol++;
         }
-      } else if ($(tr).parent().is('tfoot')) {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: backgroundColor }
-        };
-        cell.font = whiteBold;
-      } else {
-        cell.font = blackBoldContend;
-      }
-
-      const rowspan = $(td).attr('rowspan');
-      const colspan = $(td).attr('colspan') ? parseInt($(td).attr('colspan')) : 1;
-      colCount += colspan;
-
-      if (rowspan || colspan > 1) {
-        const endRow = rowspan ? currentRow + parseInt(rowspan) - 1 : currentRow;
-        const endCol = currentCol + colspan - 1;
-        sheet.mergeCells(currentRow, currentCol, endRow, endCol);
-
-        for (let r = currentRow; r <= endRow; r++) {
-          for (let c = currentCol; c <= endCol; c++) {
-            const mergedCell = sheet.getCell(r, c);
-            mergedCell.alignment = alignmentStyle;
-            mergedCell.border = borderStyle;
-            if ($(tr).parent().is('thead')) {
-              mergedCell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: backgroundColor }
-              };
-              mergedCell.font = whiteBold;
+  
+        const cell = sheet.getCell(currentRow, currentCol);
+        cell.value = $(td).text();
+        cell.alignment = alignmentStyle;
+        cell.border = borderStyle;
+  
+        if ($(tr).parent().is('thead')) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: backgroundColor }
+          };
+          cell.font = whiteBold;
+  
+          const cellValueLength = cell.value.length;
+          if (!columnWidths[currentCol - 1] || cellValueLength > columnWidths[currentCol - 1]) {
+            columnWidths[currentCol - 1] = Math.min(cellValueLength, MAX_COLUMN_WIDTH);
+          }
+        } else if ($(tr).parent().is('tfoot')) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: backgroundColor }
+          };
+          cell.font = whiteBold;
+        } else {
+          cell.font = blackBoldContend;
+        }
+  
+        const rowspan = $(td).attr('rowspan');
+        const colspan = $(td).attr('colspan') ? parseInt($(td).attr('colspan')) : 1;
+        colCount += colspan;
+  
+        if (rowspan || colspan > 1) {
+          const endRow = rowspan ? currentRow + parseInt(rowspan) - 1 : currentRow;
+          const endCol = currentCol + colspan - 1;
+          sheet.mergeCells(currentRow, currentCol, endRow, endCol);
+  
+          for (let r = currentRow; r <= endRow; r++) {
+            for (let c = currentCol; c <= endCol; c++) {
+              const mergedCell = sheet.getCell(r, c);
+              mergedCell.alignment = alignmentStyle;
+              mergedCell.border = borderStyle;
+              if ($(tr).parent().is('thead')) {
+                mergedCell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: backgroundColor }
+                };
+                mergedCell.font = whiteBold;
+              }
             }
           }
         }
+  
+        currentCol += colspan;
+      });
+      if (colCount > maxWidth) {
+        maxWidth = colCount;
       }
-
-      currentCol += colspan;
+      currentRow++;
     });
-    if (colCount > maxWidth) {
-      maxWidth = colCount;
+  }else{
+     // Código para procesar contenido JSON
+    if (content.columns.length > 0 && content.body.length > 0) {
+      // Agregar encabezados
+      let currentCol = currentColglobal;
+      content.columns.forEach((column, index) => {
+        const cell = sheet.getCell(currentRow, currentCol + index);
+        cell.value = column;
+        cell.alignment = alignmentStyle;
+        cell.border = borderStyle;
+        
+        // Alternar colores de fondo
+        const backgroundColor = index % 2 === 0 ? backgroundColor1 : backgroundColor2;
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: backgroundColor }
+        };
+
+        cell.font = whiteBold;
+        columnWidths.push(Math.min(column.length, MAX_COLUMN_WIDTH));
+      });
+      currentRow++;
+
+      // Agregar datos de cuerpo
+      content.body.forEach((row) => {
+        let currentCol = currentColglobal;
+        row.forEach((cellValue, index) => {
+          const cell = sheet.getCell(currentRow, currentCol + index);
+          cell.value = cellValue;
+          cell.alignment = alignmentStyle;
+          cell.border = borderStyle;
+          cell.font = blackBoldContend;
+          columnWidths.push(Math.min(cellValue.length, MAX_COLUMN_WIDTH));
+        });
+        currentRow++;
+      });
     }
-    currentRow++;
-  });
+  }
+ 
 
   if (maxWidth <= 9) {
     maxWidth = 4;
