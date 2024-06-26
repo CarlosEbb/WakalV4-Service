@@ -64,11 +64,12 @@ export const login = async (req, res) => {
                     return res.status(401).json(jsonResponse);
                 }
             } else {
+                const currentAttempts = user.failed_attempts + 1;
                 // Incrementar los intentos fallidos
-                await User.updateFields(user.id, { failed_attempts: user.failed_attempts + 1 });
+                await User.updateFields(user.id, { failed_attempts: currentAttempts });
 
-                // Si la contraseña no coincide, devolver un error de autenticación
-                const jsonResponse = createJSONResponse(401, 'Datos de entrada no válidos', { errors: ['Credenciales inválidas'] });
+                // Si la contraseña no coincide, devolver un error de autenticación con el número de intentos fallidos
+                const jsonResponse = createJSONResponse(401, 'Datos de entrada no válidos', { errors: [`Credenciales inválidas. Intentos fallidos: ${currentAttempts}`] });
                 return res.status(401).json(jsonResponse);
             }
         } else {
