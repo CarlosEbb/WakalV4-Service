@@ -2,7 +2,7 @@
 
 import { executeQuery } from '../utils/dbUtils.js';
 import bcrypt from 'bcrypt';
-
+import moment from 'moment';
 
 export default class User {
     #password; // Propiedad privada
@@ -34,6 +34,7 @@ export default class User {
         this.cargo = data.cargo;
         this.cod_area = data.cod_area;
         this.is_tour = data.is_tour;
+        this.failed_attempts = data.failed_attempts;
         
         if(data.rol_id == 3){
             this.cliente_id = data.cliente_id;
@@ -102,6 +103,7 @@ export default class User {
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
     
             console.log('Contraseña actualizada correctamente');
+            return hashedPassword;
         } catch (error) {
             console.error('Error al actualizar la contraseña del usuario:', error);
             throw error;
@@ -192,6 +194,9 @@ export default class User {
             // Hashear la contraseña antes de almacenarla en la base de datos
             const hashedPassword = await bcrypt.hash(data.password, 10);
     
+            const diasExpiracion = parseInt(process.env.ACCESS_EXPIRATION_DAYS, 10);
+            const fechaExpiracion = moment().add(diasExpiracion, 'days').format('YYYY-MM-DD');
+
             const insertParams = [
                 data.email,
                 hashedPassword,
@@ -200,7 +205,7 @@ export default class User {
                 data.apellido,
                 data.prefijo_cedula,
                 data.cedula,
-                data.access_expiration || null, 
+                data.access_expiration || fechaExpiracion,
                 data.registered_by_user_id || null,
                 data.enabled || 1,
                 data.email_alternativo,
@@ -228,11 +233,17 @@ export default class User {
     // Método estático para actualizar múltiples campos de un usuario por su ID
     static async updateFields(userId, fieldsToUpdate) {
         delete fieldsToUpdate.newPassword;
+        let hashedPassword = null;
         try {
             // Verificar si el campo de password está presente y encriptarlo si es necesario
             if (Object.prototype.hasOwnProperty.call(fieldsToUpdate, 'password')) {
-                const hashedPassword = await bcrypt.hash(fieldsToUpdate.password, 10);
+                hashedPassword = await bcrypt.hash(fieldsToUpdate.password, 10);
                 fieldsToUpdate.password = hashedPassword;
+    
+                // Restablecer failed_attempts a 0 y actualizar access_expiration
+                fieldsToUpdate.failed_attempts = 0;
+                const expirationDays = parseInt(process.env.ACCESS_EXPIRATION_DAYS);
+                fieldsToUpdate.access_expiration = moment().add(expirationDays, 'days').format('YYYY-MM-DD');
             }
     
             const updateQuery = `
@@ -241,14 +252,19 @@ export default class User {
                 WHERE id = ?
             `;
             const updateParams = [...Object.values(fieldsToUpdate), userId];
-             
+            
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
             console.log('Campos actualizados correctamente');
+
+            
+            return hashedPassword;
+            
         } catch (error) {
             console.error('Error al actualizar los campos del usuario:', error);
             throw error;
         }
     }
+    
     
     // Método estático para eliminar lógicamente un usuario por su ID
     static async delete(userId) {

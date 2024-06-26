@@ -1,13 +1,14 @@
 //userController.js
 
 import User from '../models/user.js';
+import BlacklistedPassword from '../models/blacklistedPassword.js';
 import Cliente from '../models/cliente.js';
 import UserCliente from '../models/userCliente.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
 import { limpiarObjeto, saveImage, deleteImage } from '../utils/tools.js';
 import Joi from 'joi';
 import fs from 'fs';
-
+import bcrypt from 'bcrypt';
 
 // Metodo para obtener todos los usuarios
 export const getAllUsers = async (req, res) => {
@@ -53,8 +54,8 @@ const createUserSchema = Joi.object({
     email: Joi.string().email().max(150).required(),
    
     password: Joi.string()
-    .min(6)
-    .message('La contraseña debe tener al menos 6 caracteres.')
+    .min(10)
+    .message('La contraseña debe tener al menos 10 caracteres.')
     .pattern(new RegExp('^(?=.*[a-z])'))
     .message('La contraseña debe contener al menos una letra minúscula.')
     .pattern(new RegExp('^(?=.*[A-Z])'))
@@ -181,8 +182,8 @@ const updateUserSchema = Joi.object({
     username: Joi.string().required(),
     
     password: Joi.string()
-        .min(6)
-        .message('La contraseña debe tener al menos 6 caracteres.')
+        .min(10)
+        .message('La contraseña debe tener al menos 10 caracteres.')
         .pattern(new RegExp('^(?=.*[a-z])'))
         .message('La contraseña debe contener al menos una letra minúscula.')
         .pattern(new RegExp('^(?=.*[A-Z])'))
@@ -233,9 +234,31 @@ export const updateUser = async (req, res) => {
             }
         }
 
+         // Verificar si la contraseña está siendo actualizada
+         if ('password' in fieldsToUpdate) {
+            const newPassword = fieldsToUpdate.password;
+            const lastPasswords = await BlacklistedPassword.getLastPasswords(userId);
+           
+            const isBlacklisted = await Promise.all(
+                lastPasswords.map(async (hash) => await bcrypt.compare(newPassword, hash))
+            );
+
+            if (isBlacklisted.includes(true)) {
+                const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: [`La nueva contraseña no puede ser igual a ninguna de las últimas ${process.env.NUMBER_LAST_PASSWORDS} contraseñas utilizadas`] });
+                fieldsToUpdate.img_profile = imagen ? deleteImage(imagen) : null;
+                return res.status(400).json(jsonResponse);
+            }
+        }
+
         // Si pasa todas las validaciones, actualizar el usuario
         fieldsToUpdate.img_profile = imagen ? saveImage(imagen) : null;
-        await User.updateFields(userId, limpiarObjeto(fieldsToUpdate));
+        const hashedPassword = await User.updateFields(userId, limpiarObjeto(fieldsToUpdate));
+
+         // Añadir la nueva contraseña a la lista negra si fue actualizada
+        if (hashedPassword) {
+            await BlacklistedPassword.addToBlacklist(userId, hashedPassword);
+        }
+
         const jsonResponse = createJSONResponse(200, 'Usuario actualizado correctamente', {});
         return res.status(200).json(jsonResponse);
     } catch (error) {

@@ -169,7 +169,7 @@ export const getConsultasPDF = async (req, res) => {
         }
 
         // Verificar si el token es válido
-        jwt.verify(token, 'secretKey', async (err, decoded) => {
+        jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
             if (err) {
                 // Si el token no es válido, devolver un error de token inválido
                 const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: ['¡Ups! El token que has introducido no es válido o ya ha sido utilizado'] });

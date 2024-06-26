@@ -14,7 +14,7 @@ export default function authMiddleware(req, res, next) {
     }
 
     // Verificar el token
-    jwt.verify(token, 'secretKey', (err, decodedToken) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decodedToken) => {
         if (err) {
             // Si hay un error al verificar el token, devolver un error de no autorizado
             const jsonResponse = createJSONResponse(401, 'Token de acceso inválido', {});
