@@ -37,7 +37,7 @@ const limiter = rateLimit({
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: (req, res, next) => {
         const jsonResponse = createJSONResponse(429, 'Too many requests', {
-            errors: ['Has hecho demasiadas peticiones. Por favor, intenta de nuevo más tarde.']
+            errors: ['Has alcanzado el límite de solicitudes. Por favor, espera unos minutos antes de intentarlo de nuevo.']
         });
         res.status(429).json(jsonResponse);
     }
