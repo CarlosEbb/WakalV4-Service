@@ -98,10 +98,26 @@ export const logout = async (req, res) => {
     }
 };
 
+
+const emailSchema = Joi.object({
+    email: Joi.string()
+      .email({ tlds: { allow: false } })
+      .required()
+      .messages({
+        'string.email': 'El formato del correo electrónico es incorrecto.',
+        'any.required': 'El correo electrónico es un campo requerido.'
+      })
+  });
 export const resetPasswordRequest = async (req, res) => {
     try {
         const { email } = req.body;
 
+        const { error, value } = emailSchema.validate(req.body, { abortEarly: false });
+        if (error) {
+            const validationErrors = error.details.map(detail => detail.message.replace(/['"]/g, ''));
+            const jsonResponse = createJSONResponse(400, 'Datos de entrada no válidos', { errors: validationErrors });
+            return res.status(400).json(jsonResponse);
+        }
         // Buscar el usuario por su correo electrónico
         const user = await User.findByEmailOrUsername(email);
         

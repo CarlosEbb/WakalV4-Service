@@ -1,6 +1,8 @@
 // consultaRoutes.js
 import express from 'express';
+import csrf from 'csurf';
 const router = express.Router();
+const csrfProtection = csrf({ cookie: true });
 import { getAllConsultasByCliente, getConsultasPDF, getAllParametros, createConsultas, deleteConsultas, getAllConsultasByClienteAndRol } from '../controllers/consultaController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import checkRolePermissions from '../middlewares/checkRolePermissions.js';

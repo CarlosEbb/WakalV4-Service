@@ -5,6 +5,8 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import csrf from 'csurf'; // Importa csurf para la protección CSRF
 import cors from 'cors';
+import helmet from "helmet";
+import { rateLimit } from 'express-rate-limit'
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -28,13 +30,30 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8001;
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    handler: (req, res, next) => {
+        const jsonResponse = createJSONResponse(429, 'Too many requests', {
+            errors: ['Has hecho demasiadas peticiones. Por favor, intenta de nuevo más tarde.']
+        });
+        res.status(429).json(jsonResponse);
+    }
+});
+
+
+// Habilitar rate limit
+app.use(limiter);
+
 // Habilitar compresión
 app.use(compression());
 
 // Habilitar CORS para todas las rutas
 // Configuración de CORS
 app.use(cors({
-    origin: ['http://localhost:8002','http://localhost:8002','https://wsplusqa.solucioneslaser.com/', 'https://wakalplusqa.solucioneslaser.com/'],
+    origin: ['http://localhost:8001','http://localhost:8002','https://wsplusqa.solucioneslaser.com/', 'https://wakalplusqa.solucioneslaser.com/'],
     methods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -45,6 +64,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Hacer que la carpeta 'uploads' sea pública
 app.use('/uploads', express.static('uploads'));
+
+// Habilitar Helmet!
+app.use(helmet());
 
 // Middleware para establecer encabezados de tipo de contenido
 app.use((req, res, next) => {
@@ -58,8 +80,13 @@ app.use(bodyParser.json());
 // Middleware de cookie-parser para procesar cookies
 app.use(cookieParser());
 
-// Configuración de csurf
-//app.use(csrf({ cookie: true }));//descomentar para usar csrf, recordar que esto hay que enviarlo en los formularios
+// Configuración de middleware csurf
+const csrfProtection = csrf({ cookie: true });
+
+// Ruta para obtener el token CSRF
+app.get('/csrf-token', csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
 
 // Rutas de Auth
 app.use('/auth', authRoutes);
