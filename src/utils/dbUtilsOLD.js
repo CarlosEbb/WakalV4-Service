@@ -4,48 +4,55 @@ import odbc from 'odbc';
 const pools = {};
 
 // Función para obtener un pool de conexiones o crearlo si no existe
-async function getPool(connectionString) {
-  if (!pools[connectionString]) {
+async function getPool(DSN) {
+  if (!pools[DSN]) {
     try {
-      pools[connectionString] = await odbc.pool({
-        connectionString: connectionString,
+      pools[DSN] = await odbc.pool({
+        connectionString: `DSN=${DSN};CHARSET=UTF8;`,
         initialSize: 10,  // Número inicial de conexiones en el pool
         maxSize: 100,     // Número máximo de conexiones en el pool
-        connectTimeout: 10000 // Tiempo máximo de espera para una conexión (en milisegundos)
+        connectTimeout: 10 * 1000 // Tiempo máximo de espera para una conexión (en milisegundos)
       });
     } catch (error) {
-      console.error(`Error al crear el pool de conexiones para ${connectionString}:`, error);
+      console.error(`Error al crear el pool de conexiones para ${DSN}:`, error);
       throw error;
     }
   }
-  return pools[connectionString];
+  return pools[DSN];
 }
 
 // Función para ejecutar consultas usando el pool de conexiones adecuado
-export async function executeQuery(connectionString, query, params) {
+export async function executeQuery(DSN, query, params) {
   let connection;
   try {
-    // Obtén el pool de conexiones para la cadena de conexión dada
-    const pool = await getPool(connectionString);
-
+    // Obtén el pool de conexiones para el DSN dado
+    const pool = await getPool(DSN);
+    
     // Obtén una conexión del pool
     connection = await pool.connect();
-
+    
     // Ejecuta la consulta con los parámetros proporcionados
     const result = await connection.query(query, params);
-
+    
     // Retorna el resultado de la consulta
     return result;
   } catch (error) {
     // Captura y maneja cualquier error que ocurra durante la ejecución de la consulta
-    console.error(`Error al ejecutar la consulta ODBC - ${connectionString}:`, error);
-
-    // Limpia el pool de conexiones para este connectionString en caso de error grave
-    if (pools[connectionString]) {
-      await pools[connectionString].close();
-      delete pools[connectionString];
+    console.error(`Error al ejecutar la consulta ODBC - ${DSN}:`, error);
+    
+    // Opcional: Implementa un mecanismo de reintento antes de limpiar el pool
+    if (error.message.includes('timeout') || error.message.includes('conexión')) {
+      // Si el error es debido a un timeout o problema de conexión, puedes intentar reconectar
+      console.log('Intentando reconectar...');
+      // Aquí puedes implementar un mecanismo de reintento, si es necesario
     }
-
+    
+    // Limpia el pool de conexiones para este DSN en caso de error grave
+    if (pools[DSN]) {
+      await pools[DSN].close();
+      delete pools[DSN];
+    }
+    
     throw error; // Propaga el error para ser manejado por el llamador
   } finally {
     // Devuelve la conexión al pool
@@ -72,33 +79,31 @@ export async function prepareQueryforClient(select, from, where = null) {
 }
 
 
-export async function validateConnection(connectionString) {
+export async function validateConnection(DSN) {
   let connection;
   try {
-    // Verificar si la cadena de conexión no es nula
-    if (!connectionString) {
-      console.error('Cadena de conexión no proporcionada.');
-      return false;
-    }
-
-    // Intenta establecer la conexión utilizando la cadena de conexión proporcionada
-    connection = await odbc.connect(connectionString);
-
-    // Si no hay errores al conectar, devuelve true
-    return true;
-  } catch (error) {
-    // Si ocurre algún error al conectar, devuelve false
-    console.error('Error al validar la conexión:', error);
-    return false;
-  } finally {
-    // Cierra la conexión si está abierta
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error('Error al cerrar la conexión:', error);
+      // Verificar si el DSN no es null
+      if (!DSN) {
+          console.error('DSN no proporcionado.');
+          return false;
       }
-    }
+      // Intenta establecer la conexión utilizando el DSN proporcionado
+      connection = await odbc.connect(`DSN=${DSN}`);
+      // Si no hay errores al conectar, devuelve true
+      return true;
+  } catch (error) {
+      // Si ocurre algún error al conectar, devuelve false
+      console.error('Error al validar la conexión:', error);
+      return false;
+  } finally {
+      // Cierra la conexión si está abierta
+      if (connection) {
+          try {
+              await connection.close();
+          } catch (error) {
+              console.error('Error al cerrar la conexión:', error);
+          }
+      }
   }
 }
 

@@ -186,7 +186,7 @@ export const getDataExcel = async (req, res) => {
         logo: "../public/img/logo.jpg",
       }
       const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-      const workbook = await createExcel(content, config);
+      const workbook = await createExcel(html, config);
       // respuesta de descarga
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
@@ -212,11 +212,11 @@ export const getDataPDF = async (req, res) => {
       tituloAdicional: 'Total Numeros de Controles Asignados: 20',
       tituloAdicional2: "Factura 4456",
       logo: "../public/img/banner_reporte.jpg",
-      //pageOrientation: "Landscape",
+      pageOrientation: "Landscape",
       
     }
     const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-    const pdfBuffer = await createPDF(content , config);
+    const pdfBuffer = await createPDF(html , config);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
