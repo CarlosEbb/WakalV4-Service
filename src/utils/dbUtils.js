@@ -9,7 +9,7 @@ async function getPool(connectionString) {
   if (!pools[connectionString]) {
     try {
       pools[connectionString] = await odbc.pool({
-        connectionString: connectionString,
+        connectionString: connectionString+';CHARSET=UTF8;',
         initialSize: 10,  // Número inicial de conexiones en el pool
         maxSize: 100,     // Número máximo de conexiones en el pool
         connectTimeout: 10000 // Tiempo máximo de espera para una conexión (en milisegundos)
