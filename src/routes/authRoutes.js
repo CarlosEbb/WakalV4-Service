@@ -1,9 +1,8 @@
-//authRoutes.js
 import express from 'express';
-import csrf from 'csurf';
+
 const router = express.Router();
-const csrfProtection = csrf({ cookie: true });
-import {login, logout, resetPasswordRequest, changePassword, tokenVerify} from '../controllers/authController.js';
+
+import { login, logout, resetPasswordRequest, changePassword, tokenVerify } from '../controllers/authController.js';
 import auditMiddleware from '../middlewares/auditMiddleware.js';
 
 // Ruta para iniciar sesión

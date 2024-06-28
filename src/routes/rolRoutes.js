@@ -1,8 +1,8 @@
 //userRoutes.js
 import express from 'express';
-import csrf from 'csurf';
+
 const router = express.Router();
-const csrfProtection = csrf({ cookie: true });
+
 import {getAllRoles} from '../controllers/rolController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import checkRolePermissions from '../middlewares/checkRolePermissions.js';

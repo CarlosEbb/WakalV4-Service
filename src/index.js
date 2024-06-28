@@ -3,7 +3,7 @@ import express from 'express';
 import compression from 'compression';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
-import csrf from 'csurf'; // Importa csurf para la protección CSRF
+import csrf from 'csrf'; // Importar csurf para la protección CSRF
 import cors from 'cors';
 import helmet from "helmet";
 import { rateLimit } from 'express-rate-limit'
@@ -32,7 +32,7 @@ const PORT = process.env.PORT || 8001;
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    limit: 10000, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: (req, res, next) => {
@@ -43,6 +43,8 @@ const limiter = rateLimit({
     }
 });
 
+// Middleware de cookie-parser para procesar cookies
+app.use(cookieParser());
 
 // Habilitar rate limit
 app.use(limiter);
@@ -53,14 +55,14 @@ app.use(compression());
 // Habilitar CORS para todas las rutas
 // Configuración de CORS
 app.use(cors({
-    origin: ['http://localhost:8001','http://localhost:8002','https://wsplusqa.solucioneslaser.com/', 'https://wakalplusqa.solucioneslaser.com/'],
+    origin: ['http://localhost:8001', 'http://localhost:8002', 'https://wsplusqa.solucioneslaser.com', 'https://wakalplusqa.solucioneslaser.com'],
     methods: ['GET', 'POST', 'DELETE', 'PUT'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'csrf-token'],
+    credentials: true  // Habilitar el envío de cookies y credenciales
 }));
 
 // Middleware para servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
-
 
 // Hacer que la carpeta 'uploads' sea pública
 app.use('/uploads', express.static('uploads'));
@@ -77,49 +79,57 @@ app.use((req, res, next) => {
 // Middleware de body-parser para procesar el cuerpo de las solicitudes
 app.use(bodyParser.json());
 
-// Middleware de cookie-parser para procesar cookies
-app.use(cookieParser());
+// Configurar csurf para CSRF
+const tokens = new csrf();
+const csrfProtection = (req, res, next) => {
+    const csrfToken = req.headers['csrf-token'];
+    if (!csrfToken || !tokens.verify(process.env.CSRF_SECRET, csrfToken)) {
+        const jsonResponse = createJSONResponse(403, 'Forbidden', {
+            errors: ['Token CSRF inválido']
+        });
+        return res.status(403).json(jsonResponse);
+    }
+    next();
+};
 
-// Configuración de middleware csurf
-const csrfProtection = csrf({ cookie: true });
+// Endpoint para obtener y establecer el token CSRF en una cookie
+app.get('/csrf-token', (req, res) => {
+    const csrfToken = tokens.create(process.env.CSRF_SECRET);
 
-// Ruta para obtener el token CSRF
-app.get('/csrf-token', csrfProtection, (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
+    // Enviar el token CSRF como respuesta
+    res.json({ csrfToken });
 });
 
-// Rutas de Auth
-app.use('/auth', authRoutes);
+
+// Rutas de Auth con protección CSRF
+app.use('/auth', csrfProtection, authRoutes);
 
 // Rutas de usuarios
-app.use('/usuarios', userRoutes);
+ app.use('/usuarios', csrfProtection, userRoutes);
 
 // Rutas de Roles
-app.use('/roles', rolRoutes);
+ app.use('/roles', csrfProtection, rolRoutes);
 
 // Rutas de Auditorias
-app.use('/auditorias', auditoriasRoutes);
+ app.use('/auditorias', csrfProtection, auditoriasRoutes);
 
 // Rutas de clientes
-app.use('/clientes', clienteRoutes);
+ app.use('/clientes', csrfProtection, clienteRoutes);
 
 // Rutas para consultas
-app.use('/consultas', consultaRoutes);
+ app.use('/consultas', csrfProtection, consultaRoutes);
 
 // Rutas para consultas de cliente
-app.use('/consultasCliente', consultasClienteRoutes);
+ app.use('/consultasCliente', csrfProtection, consultasClienteRoutes);
 
 // Middleware para manejo de errores
 app.use((err, req, res, next) => {
     console.error('Error no controlado:', err.message);
     // Ejemplo de respuesta de error genérica
-    const jsonResponse = createJSONResponse(500, 'Error interno del servidor' , { errors: ['Error no controlado: '+ err.message] });
+    const jsonResponse = createJSONResponse(500, 'Error interno del servidor', { errors: ['Error no controlado: ' + err.message] });
     res.status(500).json(jsonResponse);
 });
-
 
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
-
-

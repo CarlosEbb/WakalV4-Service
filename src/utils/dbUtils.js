@@ -5,7 +5,6 @@ const pools = {};
 
 // Función para obtener un pool de conexiones o crearlo si no existe
 async function getPool(connectionString) {
-  console.log(connectionString);
   if (!pools[connectionString]) {
     try {
       pools[connectionString] = await odbc.pool({

@@ -1,10 +1,10 @@
 // clienteRoutes.js
 
 import express from 'express';
-import csrf from 'csurf';
+
 import multer from 'multer';
 const router = express.Router();
-const csrfProtection = csrf({ cookie: true });
+
 import {getAllClientesWithConnectionStatus, getAllClientes, createCliente, getClienteById, updateCliente, deleteCliente} from '../controllers/clienteController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import checkRolePermissions from '../middlewares/checkRolePermissions.js';

@@ -1,9 +1,9 @@
 //userRoutes.js
 import express from 'express';
-import csrf from 'csurf';
+
 import multer from 'multer';
 const router = express.Router();
-const csrfProtection = csrf({ cookie: true });
+
 import {getAllUsers, createUsuario, getUserById, updateUser, deleteUser} from '../controllers/userController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import checkRolePermissions from '../middlewares/checkRolePermissions.js';
