@@ -180,10 +180,7 @@ export const getDataExcel = async (req, res) => {
   try {
       // Generar Excel
       const config = {
-        titulo: 'REPORTE  NUMEROS DE CONTROL MARZO 2024',
-        subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
-        tituloAdicional: 'FACTURA SERVICIO: 00044562',
-        logo: "../public/img/logo.jpg",
+       
       }
       const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
       const workbook = await createExcel(html, config);
@@ -216,7 +213,7 @@ export const getDataPDF = async (req, res) => {
       
     }
     const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-    const pdfBuffer = await createPDF(html , config);
+    const pdfBuffer = await createPDF(content , config);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);

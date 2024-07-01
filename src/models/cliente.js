@@ -4,11 +4,14 @@ import { executeQuery, validateConnection } from "../utils/dbUtils.js";
 
 export default class Cliente {
     constructor(data) {
+
+        const useConnectionString = process.env.DB_CONNECTION_ODBC_TYPE_STRING === 'true';
+
         this.id = data.id;
         this.rif = data.rif;
         this.nombre_cliente = data.nombre_cliente;
         this.is_prod = data.is_prod || null;
-        this.connections = data.connections || null;
+        this.connections = useConnectionString ? data.connections_string : data.connections;
         this.is_tour = data.is_tour || null;
 
         this.logo = data.logo || null;

@@ -30,7 +30,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8001;
 
-app.set('trust proxy', true);
+//app.set('trust proxy', true);
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -119,10 +119,10 @@ app.use('/auth', csrfProtection, authRoutes);
  app.use('/clientes', csrfProtection, clienteRoutes);
 
 // Rutas para consultas
- app.use('/consultas', csrfProtection, consultaRoutes);
+ app.use('/consultas', consultaRoutes);
 
 // Rutas para consultas de cliente
- app.use('/consultasCliente', csrfProtection, consultasClienteRoutes);
+ app.use('/consultasCliente', consultasClienteRoutes);
 
 // Middleware para manejo de errores
 app.use((err, req, res, next) => {

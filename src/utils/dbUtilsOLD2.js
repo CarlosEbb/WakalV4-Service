@@ -1,43 +1,32 @@
 import odbc from 'odbc';
-import dotenv from 'dotenv';
 
-// Cargar variables de entorno
-dotenv.config();
-
-// Obtener el valor de la variable de entorno
-const useConnectionString = process.env.DB_CONNECTION_ODBC_TYPE_STRING === 'true';
-
-// Objeto para almacenar pools de conexiones por DSN o connectionString
+// Objeto para almacenar pools de conexiones por DSN
 const pools = {};
 
 // Función para obtener un pool de conexiones o crearlo si no existe
-async function getPool(connectionParam) {
-  if (!pools[connectionParam]) {
+async function getPool(connectionString) {
+  if (!pools[connectionString]) {
     try {
-      const connectionString = useConnectionString
-        ? connectionParam 
-        : `DSN=${connectionParam}`;
-
-      pools[connectionParam] = await odbc.pool({
-        connectionString: connectionString + ';CHARSET=UTF8;',
+      pools[connectionString] = await odbc.pool({
+        connectionString: connectionString+';CHARSET=UTF8;',
         initialSize: 10,  // Número inicial de conexiones en el pool
         maxSize: 100,     // Número máximo de conexiones en el pool
         connectTimeout: 10000 // Tiempo máximo de espera para una conexión (en milisegundos)
       });
     } catch (error) {
-      console.error(`Error al crear el pool de conexiones para ${connectionParam}:`, error);
+      console.error(`Error al crear el pool de conexiones para ${connectionString}:`, error);
       throw error;
     }
   }
-  return pools[connectionParam];
+  return pools[connectionString];
 }
 
 // Función para ejecutar consultas usando el pool de conexiones adecuado
-export async function executeQuery(connectionParam, query, params) {
+export async function executeQuery(connectionString, query, params) {
   let connection;
   try {
-    // Obtén el pool de conexiones para el parámetro de conexión dado
-    const pool = await getPool(connectionParam);
+    // Obtén el pool de conexiones para la cadena de conexión dada
+    const pool = await getPool(connectionString);
 
     // Obtén una conexión del pool
     connection = await pool.connect();
@@ -49,12 +38,12 @@ export async function executeQuery(connectionParam, query, params) {
     return result;
   } catch (error) {
     // Captura y maneja cualquier error que ocurra durante la ejecución de la consulta
-    console.error(`Error al ejecutar la consulta ODBC - ${connectionParam}:`, error);
+    console.error(`Error al ejecutar la consulta ODBC - ${connectionString}:`, error);
 
-    // Limpia el pool de conexiones para este connectionParam en caso de error grave
-    if (pools[connectionParam]) {
-      await pools[connectionParam].close();
-      delete pools[connectionParam];
+    // Limpia el pool de conexiones para este connectionString en caso de error grave
+    if (pools[connectionString]) {
+      await pools[connectionString].close();
+      delete pools[connectionString];
     }
 
     throw error; // Propaga el error para ser manejado por el llamador
@@ -71,28 +60,28 @@ export async function executeQuery(connectionParam, query, params) {
 }
 
 export async function prepareQueryforClient(select, from, where = null) {
-  let query = 
-      `SELECT ${select} FROM ${from}`;
+  let query = `
+      SELECT ${select}
+      FROM ${from}
+  `;
+
   if (where !== null) {
-      query += ` WHERE ${where}`;
+      query += `WHERE ${where}`;
   }
   return query;
 }
 
-export async function validateConnection(connectionParam) {
+
+export async function validateConnection(connectionString) {
   let connection;
   try {
-    // Verificar si el parámetro de conexión no es nulo
-    if (!connectionParam) {
-      console.error('Parámetro de conexión no proporcionado.');
+    // Verificar si la cadena de conexión no es nula
+    if (!connectionString) {
+      console.error('Cadena de conexión no proporcionada.');
       return false;
     }
 
-    const connectionString = useConnectionString
-      ? connectionParam
-      : `DSN=${connectionParam};CHARSET=UTF8;`;
-
-    // Intenta establecer la conexión utilizando el parámetro de conexión proporcionado
+    // Intenta establecer la conexión utilizando la cadena de conexión proporcionada
     connection = await odbc.connect(connectionString);
 
     // Si no hay errores al conectar, devuelve true
@@ -112,7 +101,6 @@ export async function validateConnection(connectionParam) {
     }
   }
 }
-
 
 //Agregar valores adicionales de precio y montos al cliente domesa
 
