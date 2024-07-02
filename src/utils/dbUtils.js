@@ -17,7 +17,7 @@ async function getPool(connectionParam) {
       const connectionString = useConnectionString
         ? connectionParam 
         : `DSN=${connectionParam}`;
-
+      console.log('aquii: ',useConnectionString);
       pools[connectionParam] = await odbc.pool({
         connectionString: connectionString + ';CHARSET=UTF8;',
         initialSize: 10,  // Número inicial de conexiones en el pool

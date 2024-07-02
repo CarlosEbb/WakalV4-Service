@@ -60,6 +60,7 @@ app.use(cors({
     origin: ['http://localhost:8001', 'http://localhost:8002', 'https://wsplusqa.solucioneslaser.com', 'https://wakalplusqa.solucioneslaser.com'],
     methods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowedHeaders: ['Content-Type', 'Authorization', 'csrf-token'],
+    exposedHeaders: ['Content-Disposition'], // Exponer el encabezado Content-Disposition
     credentials: true  // Habilitar el envío de cookies y credenciales
 }));
 
