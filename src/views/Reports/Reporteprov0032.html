@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Tabla con encabezado</title>
+</head>
+<style>
+    table {
+        border-collapse: collapse;
+        /* Combine cell borders */
+        width: 100%;
+        /* Adjust table width as needed */
+    }
+
+    th,
+    td {
+        padding: 8px;
+        /* Add padding around cell content */
+        text-align: left;
+        /* Set text alignment */
+        border: 1px solid #ddd;
+        /* Define border style */
+    }
+
+    th {
+        background-color: #f0f0f0;
+        /* Set header row background color */
+    }
+</style>
+
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Nro.</th>
+                <th>Nro. Control</th>
+                <th>Nro. Documento</th>
+                <th>Fecha de Asignacion Nro. de Control</th>
+                <th>Hora de Asignacion Nro. de Control</th>
+                <th>Tipo de Documento</th>
+                <th>Serie</th>
+                <th>Serie Nro Factura</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>12345</td>
+                <td>987654321</td>
+                <td>2024-07-01</td>
+                <td>10:00:00</td>
+                <td>Factura</td>
+                <td>ABC</td>
+                <td>123</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>54321</td>
+                <td>876543210</td>
+                <td>2024-06-30</td>
+                <td>15:30:00</td>
+                <td>Recibo</td>
+                <td>XYZ</td>
+                <td>456</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+
+</html>
