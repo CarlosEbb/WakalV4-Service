@@ -108,7 +108,6 @@ export const getDataBusqueda = async (req, res) => {
   }
 };
 
-
       // Datos de la tabla
       const html = `
           <table>
@@ -176,6 +175,70 @@ let content = {
   ],
 }; 
 
+export const generateDataPDFHTML = async (req, res) => {
+  try {
+    // Obtener los datos de la tabla del cuerpo de la solicitud
+    const tableData = req.body.tableData;
+    if (!tableData) {
+      return res.status(400).json({ error: 'Los datos de la tabla son requeridos.' });
+    }
+
+    // Configuración del PDF
+    const config = {
+      titulo: 'Reporte Detallado Nros. de Control Asignados Providencia 0032 Art.28',
+      subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
+      tituloAdicional: 'Total Numeros de Controles Asignados: 20',
+      tituloAdicional2: "Factura 4456",
+      logo: "../public/img/banner_reporte.jpg",
+      pageOrientation: "Landscape",
+    };
+
+    const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+    
+    const pdfBuffer = await createPDF(tableData, config);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
+    res.end(pdfBuffer, 'binary');
+  } catch (error) {
+    console.error('Error al generar reporte en PDF:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const generateDataExcelHTML = async (req, res) => {
+  try {
+    // Obtener los datos de la tabla del cuerpo de la solicitud
+    const tableData = req.body.tableData;
+    if (!tableData) {
+      return res.status(400).json({ error: 'Los datos de la tabla son requeridos.' });
+    }
+    
+      // Generar Excel
+      const config = {
+        titulo: 'REPORTE  NUMEROS DE CONTROL MARZO 2024',
+        subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
+        tituloAdicional: 'FACTURA SERVICIO: 00044562',
+        logo: "../public/img/logo.jpg",
+      }
+      const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+      const workbook = await createExcel(tableData, config);
+      // respuesta de descarga
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
+
+      await workbook.xlsx.write(res);
+      res.end();
+
+      //return res.status(200).json({});
+
+  } catch (error) {
+      console.error('Error al generar reporte en excel:', error);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+
 export const getDataExcel = async (req, res) => {
   try {
       // Generar Excel
@@ -201,8 +264,6 @@ export const getDataExcel = async (req, res) => {
 
 export const getDataPDF = async (req, res) => {
   try {
-
-
     const config = {
       titulo: 'Reporte Detallado Nros. de Control Asignados Providencia 0032 Art.28',
       subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
@@ -210,13 +271,13 @@ export const getDataPDF = async (req, res) => {
       tituloAdicional2: "Factura 4456",
       logo: "../public/img/banner_reporte.jpg",
       pageOrientation: "Landscape",
-      
-    }
+    };
+
     const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-    const pdfBuffer = await createPDF(content , config);
+    const pdfBuffer = await createPDF(content, config);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
     res.end(pdfBuffer, 'binary');
   } catch (error) {
     console.error('Error al generar reporte en PDF:', error);

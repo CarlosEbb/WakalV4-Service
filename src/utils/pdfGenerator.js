@@ -223,7 +223,8 @@ export const createPDF = async (content, config = {}) => {
     docDefinition.content.push({ table });
   }else{
     const { columns, body } = content;
-   
+    let fontSizeTemp;
+    let restarFontSize = columns.length > 15 ? 3 : 0;
     // Colores para el header intercalados
     const headerColors = ['#85b71a', '#1251a0'];
     // Colores para las filas del body intercalados
@@ -239,18 +240,21 @@ export const createPDF = async (content, config = {}) => {
         let textColor = '';
         let bold = false;
         let alignment = 'center';
+       
 
         if (rowIndex === 0) {
           // Header row
           fillColor = headerColors[colIndex % headerColors.length];
           textColor = '#FFFFFF';
-          //bold = true;
+          fontSizeTemp = docDefinition.styles.header.fontSize;
+          bold = true;
         } else {
           // Body rows
           fillColor = bodyColors[(rowIndex - 1) % bodyColors.length];
           textColor = '#000000';
+          fontSizeTemp = docDefinition.styles.cell.fontSize
         }
-        return { text: cell, fillColor: fillColor, color: textColor, bold: bold, alignment: alignment, border: [true, true, true, true] };
+        return { text: cell, fillColor: fillColor, color: textColor, bold: bold, alignment: alignment, fontSize: fontSizeTemp - restarFontSize, border: [true, true, true, true] };
       });
     });
    

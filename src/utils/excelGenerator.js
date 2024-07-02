@@ -181,6 +181,7 @@ export const createExcel = async (content, config = {}) => {
       currentRow++;
     });
   }else{
+    maxWidth = content.columns.length;
      // Código para procesar contenido JSON
     if (content.columns.length > 0 && content.body.length > 0) {
       // Agregar encabezados
@@ -219,7 +220,7 @@ export const createExcel = async (content, config = {}) => {
       });
     }
   }
- 
+  
 
   if (maxWidth <= 9) {
     maxWidth = 4;
