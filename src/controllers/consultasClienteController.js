@@ -177,6 +177,16 @@ let content = {
 
 export const generateDataPDFHTML = async (req, res) => {
   try {
+    let cliente;
+    const rol_id = req.user.rol_id;
+    const cliente_id = req.params.cliente_id;
+    if (rol_id === 1 || rol_id === 2) {
+      cliente = await Cliente.findById(cliente_id);
+    } else {
+      const user = await User.findById(req.user.id);
+      cliente = await Cliente.findById(user.cliente_id);          
+    }
+
     // Obtener los datos de la tabla del cuerpo de la solicitud
     const tableData = req.body.tableData;
     if (!tableData) {
@@ -185,10 +195,8 @@ export const generateDataPDFHTML = async (req, res) => {
 
     // Configuración del PDF
     const config = {
-      titulo: 'Reporte Detallado Nros. de Control Asignados Providencia 0032 Art.28',
-      subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
-      tituloAdicional: 'Total Numeros de Controles Asignados: 20',
-      tituloAdicional2: "Factura 4456",
+      titulo: 'REPORTE',
+      subtitulo: `${cliente.nombre_cliente} RIF ${cliente.rif}`,
       logo: "../public/img/banner_reporte.jpg",
       pageOrientation: "Landscape",
     };
@@ -208,6 +216,15 @@ export const generateDataPDFHTML = async (req, res) => {
 
 export const generateDataExcelHTML = async (req, res) => {
   try {
+    let cliente;
+    const rol_id = req.user.rol_id;
+    const cliente_id = req.params.cliente_id;
+    if (rol_id === 1 || rol_id === 2) {
+      cliente = await Cliente.findById(cliente_id);
+    } else {
+      const user = await User.findById(req.user.id);
+      cliente = await Cliente.findById(user.cliente_id);          
+    }
     // Obtener los datos de la tabla del cuerpo de la solicitud
     const tableData = req.body.tableData;
     if (!tableData) {
@@ -216,9 +233,8 @@ export const generateDataExcelHTML = async (req, res) => {
     
       // Generar Excel
       const config = {
-        titulo: 'REPORTE  NUMEROS DE CONTROL MARZO 2024',
-        subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
-        tituloAdicional: 'FACTURA SERVICIO: 00044562',
+        titulo: 'REPORTE',
+        subtitulo: `${cliente.nombre_cliente} RIF ${cliente.rif}`,
         logo: "../public/img/logo.jpg",
       }
       const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';

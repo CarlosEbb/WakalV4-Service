@@ -15,8 +15,8 @@ router.get('/:cliente_id/getTotalEmitidosSemanal/:year/:month', authMiddleware, 
 //router.get('/:cliente_id/getTotalCorreos', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getTotalCorreos);
 router.get('/:cliente_id/getDataBusqueda', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getDataBusqueda);
 
-router.post('/:cliente_id/generateDataPDFHTML', generateDataPDFHTML);
-router.post('/:cliente_id/generateDataExcelHTML', generateDataExcelHTML);
+router.post('/:cliente_id/generateDataPDFHTML', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, generateDataPDFHTML);
+router.post('/:cliente_id/generateDataExcelHTML', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, generateDataExcelHTML);
 
 
 router.get('/:cliente_id/getDataPDF', getDataPDF);
