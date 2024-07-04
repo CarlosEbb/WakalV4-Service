@@ -29,9 +29,9 @@ export default class Auditoria {
                 u2.nombre AS nombre_usuario, 
                 u2.apellido AS apellido_usuario
             FROM 
-                dba.auditorias a
-                JOIN dba.roles r ON a.rol_id = r.id
-                JOIN dba.usuarios u2 ON a.usuario_id = u2.id
+                auditorias a
+                JOIN roles r ON a.rol_id = r.id
+                JOIN usuarios u2 ON a.usuario_id = u2.id
         `;
         let params = [];
 
@@ -41,7 +41,7 @@ export default class Auditoria {
                 params.push(user.rol_id);
             } else if (user.rol_id === 3) {
                 query += ` 
-                    JOIN dba.usuarios_clientes uc ON uc.user_id = a.usuario_id
+                    JOIN usuarios_clientes uc ON uc.user_id = a.usuario_id
                     WHERE a.rol_id = ? AND a.usuario_id = ? AND uc.cliente_id = ?
                 `;
                 params.push(user.rol_id, user.user_id, user.cliente_id);
