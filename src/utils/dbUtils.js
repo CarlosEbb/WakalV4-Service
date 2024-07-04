@@ -36,7 +36,6 @@ async function getPool(connectionParam) {
 export async function executeQuery(connectionParam, query, params) {
   let connection;
   try {
-    console.log(connectionParam);
     // Obtén el pool de conexiones para el parámetro de conexión dado
     const pool = await getPool(connectionParam);
 
