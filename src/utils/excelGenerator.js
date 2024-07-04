@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const backgroundColor = 'FF1251a0';//FF2F75B5
 
-const backgroundColor1 = 'FF85b71a'; // Primer color de fondo
+const backgroundColor1 = 'FF258d19'; // Primer color de fondo
 const backgroundColor2 = 'FF1251a0'; // Segundo color de fondo
 
 const fontColorWhite = 'FFFFFFFF';
