@@ -46,7 +46,7 @@ export const createPDF = async (content, config = {}) => {
 
   if(pageOrientation != 'portrait'){
     widthImage = 850;
-    heightImage = 80;
+    heightImage = 70;
     margintopImage = -60;
     margintopTable = -10;
   }
