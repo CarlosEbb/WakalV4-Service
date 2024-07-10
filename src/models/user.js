@@ -35,8 +35,9 @@ export default class User {
         this.cod_area = data.cod_area;
         this.is_tour = data.is_tour;
         this.failed_attempts = data.failed_attempts;
-        
-        if(data.rol_id == 3){
+        this.isFirstLogin = data.isFirstLogin;
+
+        if (data.rol_id == 3) {
             this.cliente_id = data.cliente_id;
             this.rif = data.rif;
             this.nombre_cliente = data.nombre_cliente;
@@ -76,7 +77,7 @@ export default class User {
     // Método estático para buscar un usuario por su correo electrónico que no haya sido eliminado lógicamente
     static async findByEmailOrUsername(email) {
         const query = `
-            SELECT u.*, r.nombre AS nombre_rol, c.*, c.id as cliente_id,  u.id as id, u.enabled as enabled, u.created_at as created_at, u.updated_at as updated_at
+            SELECT u.*, r.nombre AS nombre_rol, c.*, c.id as cliente_id,  u.id as id, u.enabled as enabled, u.created_at as created_at, u.updated_at as updated_at, u.isFirstLogin as isFirstLogin
             FROM usuarios u
             LEFT JOIN roles r ON u.rol_id = r.id
             LEFT JOIN usuarios_clientes uc ON u.id = uc.user_id
@@ -89,19 +90,19 @@ export default class User {
         }
         return null;
     }
-    
+
 
 
     static async updatePassword(userId, newPassword) {
         try {
             // Hashear la nueva contraseña antes de almacenarla en la base de datos
             const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+
             // Actualizar la contraseña del usuario en la base de datos
             const updateQuery = 'UPDATE usuarios SET password = ? WHERE id = ?';
             const updateParams = [hashedPassword, userId];
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
-    
+
             console.log('Contraseña actualizada correctamente');
             return hashedPassword;
         } catch (error) {
@@ -112,27 +113,27 @@ export default class User {
 
     // Método para obtener todos los usuarios que no han sido eliminados lógicamente
     static async getAll(user = null) {
-            let query = `
+        let query = `
                 SELECT u.*, r.nombre AS nombre_rol
                 FROM usuarios u
                 LEFT JOIN roles r ON u.rol_id = r.id
                 WHERE u.enabled = 1
             `;
-            let params = [];
-    
-            if (user !== null) {
-                query += ' AND u.rol_id = ? AND registered_by_user_id = ?';
-                params.push(user.rol_id);
-                params.push(user.id);
-            }
+        let params = [];
 
-            query += ' order by u.id';
+        if (user !== null) {
+            query += ' AND u.rol_id = ? AND registered_by_user_id = ?';
+            params.push(user.rol_id);
+            params.push(user.id);
+        }
 
-            const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
-            return result;
+        query += ' order by u.id';
+
+        const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query, params);
+        return result;
     }
-    
-    
+
+
     // Método estático para verificar si el correo electrónico existe y si el usuario asociado está marcado como eliminado lógicamente
     static async emailExists(email) {
         try {
@@ -190,10 +191,10 @@ export default class User {
                     SELECT @@IDENTITY AS 'ID';
                 END;
             `;
-            
+
             // Hashear la contraseña antes de almacenarla en la base de datos
             const hashedPassword = await bcrypt.hash(data.password, 10);
-    
+
             const diasExpiracion = parseInt(process.env.ACCESS_EXPIRATION_DAYS, 10);
             const fechaExpiracion = moment().add(diasExpiracion, 'days').format('YYYY-MM-DD');
 
@@ -219,7 +220,7 @@ export default class User {
                 data.cargo || null,
                 data.cod_area || null,
             ];
-            
+
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, insertQuery, insertParams);
             console.log('Usuario creado correctamente');
             return String(result[0].ID); // Retorna el ID del nuevo usuario creado
@@ -228,7 +229,7 @@ export default class User {
             throw error;
         }
     }
-    
+
 
     // Método estático para actualizar múltiples campos de un usuario por su ID
     static async updateFields(userId, fieldsToUpdate) {
@@ -239,33 +240,33 @@ export default class User {
             if (Object.prototype.hasOwnProperty.call(fieldsToUpdate, 'password')) {
                 hashedPassword = await bcrypt.hash(fieldsToUpdate.password, 10);
                 fieldsToUpdate.password = hashedPassword;
-    
+
                 // Restablecer failed_attempts a 0 y actualizar access_expiration
                 fieldsToUpdate.failed_attempts = 0;
                 const expirationDays = parseInt(process.env.ACCESS_EXPIRATION_DAYS);
                 fieldsToUpdate.access_expiration = moment().add(expirationDays, 'days').format('YYYY-MM-DD');
             }
-    
+
             const updateQuery = `
                 UPDATE usuarios
                 SET ${Object.keys(fieldsToUpdate).map(field => `${field} = ?`).join(', ')}
                 WHERE id = ?
             `;
             const updateParams = [...Object.values(fieldsToUpdate), userId];
-            
+
             await executeQuery(process.env.DB_CONNECTION_ODBC, updateQuery, updateParams);
             console.log('Campos actualizados correctamente');
 
-            
+
             return hashedPassword;
-            
+
         } catch (error) {
             console.error('Error al actualizar los campos del usuario:', error);
             throw error;
         }
     }
-    
-    
+
+
     // Método estático para eliminar lógicamente un usuario por su ID
     static async delete(userId) {
         try {
