@@ -36,7 +36,7 @@ export const migrate = async (req, res) => {
                     password: usuariosClientes[index].clave,
                     rol_id: usuariosClientes[index].groups_id,
                     nombre: usuariosClientes[index].nombre || "",
-                    apellido: usuariosClientes[index].apellido || "",
+                    apellido: usuariosClientes[index].Apellido || "",
                     prefijo_cedula: tipo_doc,
                     cedula: doc,
                     email_alternativo: usuariosClientes[index].correo,
