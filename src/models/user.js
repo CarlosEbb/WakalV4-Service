@@ -34,6 +34,8 @@ export default class User {
         this.cargo = data.cargo;
         this.cod_area = data.cod_area;
         this.is_tour = data.is_tour;
+        this.isFirstLogin = data.isFirstLogin;
+
         this.failed_attempts = data.failed_attempts;
         this.isFirstLogin = data.isFirstLogin;
 

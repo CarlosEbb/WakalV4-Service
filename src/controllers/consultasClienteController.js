@@ -186,7 +186,7 @@ export const generateDataPDFHTML = async (req, res) => {
       const user = await User.findById(req.user.id);
       cliente = await Cliente.findById(user.cliente_id);          
     }
-
+    
     // Obtener los datos de la tabla del cuerpo de la solicitud
     const tableData = req.body.tableData;
     if (!tableData) {
@@ -225,6 +225,7 @@ export const generateDataExcelHTML = async (req, res) => {
       const user = await User.findById(req.user.id);
       cliente = await Cliente.findById(user.cliente_id);          
     }
+
     // Obtener los datos de la tabla del cuerpo de la solicitud
     const tableData = req.body.tableData;
     if (!tableData) {

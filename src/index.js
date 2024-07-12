@@ -31,11 +31,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8001;
 
-//app.set('trust proxy', true);
+app.set('trust proxy', true);
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 10000, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    windowMs: 10 * 60 * 1000, // 15 minutes
+    limit: 5000, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: (req, res, next) => {
@@ -60,7 +60,7 @@ app.use(compression());
 app.use(cors({
     origin: ['http://localhost:8001', 'http://localhost:8002', 'https://wsplusqa.solucioneslaser.com', 'https://wakalplusqa.solucioneslaser.com'],
     methods: ['GET', 'POST', 'DELETE', 'PUT'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'csrf-token'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'csrf-token', 'Access-Control-Allow-Headers', 'ipclient'],
     exposedHeaders: ['Content-Disposition'], // Exponer el encabezado Content-Disposition
     credentials: true  // Habilitar el envío de cookies y credenciales
 }));

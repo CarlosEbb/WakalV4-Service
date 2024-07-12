@@ -46,7 +46,7 @@ export const createPDF = async (content, config = {}) => {
 
   if(pageOrientation != 'portrait'){
     widthImage = 850;
-    heightImage = 80;
+    heightImage = 70;
     margintopImage = -60;
     margintopTable = -10;
   }
@@ -226,7 +226,7 @@ export const createPDF = async (content, config = {}) => {
     let fontSizeTemp;
     let restarFontSize = columns.length > 15 ? 3 : 0;
     // Colores para el header intercalados
-    const headerColors = ['#85b71a', '#1251a0'];
+    const headerColors = ['#258d19', '#1251a0'];
     // Colores para las filas del body intercalados
     const bodyColors = ['#fdfdfd', '#eeeced'];
 
