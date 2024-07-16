@@ -66,430 +66,178 @@ export default class ConsultasCliente {
     }
 
     async getDataBusqueda(queryParams) {
-     
         let params = [];
-        
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
-        let url_documento;
-        let url_documento_anexos;
         let addSelect = '';
-
-        if(this.cliente.is_prod == 1){
-            url_documento = `'${this.cliente.url_prod}'`;
-            url_documento_anexos = `'${this.cliente.url_prod_anexos}'`;
-        }else{
-            url_documento = `'${this.cliente.url_qa}'`;
-            url_documento_anexos = `'${this.cliente.url_qa_anexos}'`;
+    
+        // Configurar URLs basadas en el entorno
+        //({ url_documento, url_documento_anexos } = this.setURLs(this.cliente));
+    
+        // Manejar coletilla si es necesario
+        tabla = await this.handleColetilla(queryParams, tabla);
+        
+        // Reemplazar la plantilla del mes si es necesario
+        tabla = this.replaceMesTemplate(queryParams, tabla);
+        
+        // Inicializar variables comunes
+        const { order, limit, offset } = this.initializePagination(queryParams);
+    
+        // Agregar filtros al whereClause y params
+        whereClause = this.addFilters(queryParams, params, whereClause);
+    
+        // Construir el select adicional
+        addSelect = this.buildAdditionalSelect();
+    
+        // Construir y ejecutar la consulta
+        const query = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order);
+        console.log(query, params);
+    
+        let result = await executeQuery(this.cliente.connections, query, params);
+    
+        if (this.cliente.id == 10) {
+            result = await addPreciosDomesa(result, this.cliente.connections);
         }
         
-        if(this.cliente.name_bd_table_coletilla != null && (queryParams.numero_control || queryParams.numero_documento)){
-            let params_coletilla = [];
-            let queryPart = '';
-            if (queryParams.numero_control) {
-                params_coletilla.push(queryParams.numero_control);
-                queryPart = `? BETWEEN rangoInicial AND rangoFinal`;
-            }
-        
-            if (queryParams.numero_documento) {
-                if (queryPart !== '') {
-                    queryPart += ' OR ';
-                }
-                params_coletilla.push(queryParams.numero_documento);
-                params_coletilla.push(queryParams.numero_documento);
-                params_coletilla.push(queryParams.numero_documento);
-                queryPart += `? BETWEEN rangoInicalFac AND rangoFinalFac OR `;
-                queryPart += `? BETWEEN rangoInicalNC AND rangoFinalNC OR `;
-                queryPart += `? BETWEEN rangoInicalND AND rangoFinalND`;
-            }
-
-            
-
-            let query_coletilla = `
-                SELECT 
-                    mesCarga as numero_mes
-                FROM coletilla
-                ${queryPart !== '' ? 'WHERE ' + queryPart : ''}
-            `;
-            
+        return result;
+    }
+    
+    
+    // Función para configurar URLs basadas en el entorno
+    setURLs(cliente) {
+        if (cliente.is_prod == 1) {
+            return {
+                url_documento: `'${cliente.url_prod}'`,
+                url_documento_anexos: `'${cliente.url_prod_anexos}'`
+            };
+        } else {
+            return {
+                url_documento: `'${cliente.url_qa}'`,
+                url_documento_anexos: `'${cliente.url_qa_anexos}'`
+            };
+        }
+    }
+    
+    // Función para manejar coletilla
+    async handleColetilla(queryParams, tabla) {
+        if (this.cliente.name_bd_table_coletilla != null && (queryParams.numero_control || queryParams.numero_documento)) {
+            let { query_coletilla, params_coletilla } = this.buildColetillaQuery(queryParams);
             const result_coletilla = await executeQuery(this.cliente.connections, query_coletilla, params_coletilla);
             let data_coletilla = result_coletilla[0]?.numero_mes;
-            if(!data_coletilla){
+            if (!data_coletilla) {
                 return null;
             }
             if (tabla.includes('{{Mes}}')) {
-                tabla = tabla.replace('{{Mes}}',obtenerNombreDelMes(data_coletilla));
+                tabla = tabla.replace('{{Mes}}', obtenerNombreDelMes(data_coletilla));
             }
-        }else if(queryParams.fecha_inicio || queryParams.fecha_final){
-           
+        }
+        return tabla;
+    }
+    
+    // Función para reemplazar la plantilla del mes si es necesario
+    replaceMesTemplate(queryParams, tabla) {
+        if (queryParams.fecha_inicio || queryParams.fecha_final) {
             if (tabla.includes('{{Mes}}')) {
                 tabla = tabla.replace('{{Mes}}', obtenerNombreDelMes(obtenerNumeroMes(queryParams.fecha_inicio)));
             }
         }
-
-        let order = '';
-        let page = 1;
-        let limit = 10;
-        let offset = (page - 1) * limit + 1;
-
-        let numero_control;
-        let numero_control_nameParamBD = this.cliente.name_bd_column_numero_control;
-        let numero_control_nameString = "numero_control";
-
-        let numero_documento;
-        let numero_documento_nameParamBD = this.cliente.name_bd_column_numero_documento;
-        let numero_documento_nameString = "numero_documento";
-
-        let tipo_documento;
-        let tipo_documento_nameParamBD = this.cliente.name_bd_column_tipo_documento;
-        let tipo_documento_nameString = "tipo_documento";
-
-        let serie;
-        let serie_nameParamBD = this.cliente.name_bd_column_serie;
-        let serie_nameString = "serie";
-
-        let rif;
-        let rif_nameParamBD = this.cliente.name_bd_column_rif;
-        let rif_nameString = "rif";
-
-        let correo_cliente_nameParamBD = this.cliente.name_bd_column_correo_cliente;
-        let correo_cliente_nameString = "correo_cliente";
-
-        let telefono_cliente_nameParamBD = this.cliente.name_bd_column_telefono_cliente;
-        let telefono_cliente_nameString = "telefono_cliente";
-
-        let razon_social;
-        let razon_social_nameParamBD = this.cliente.name_bd_column_razon_social;
-        let razon_social_nameString = "razon_social";
-
-        let fecha_inicio;
-        let fecha_final;
-        let fecha_tipo;
-
-        let fecha_emision_nameParamBD = this.cliente.name_bd_column_fecha_emision;
-        let fecha_emision_nameString = "fecha_emision";
-
-        let fecha_asignacion_nameParamBD = this.cliente.name_bd_column_fecha_asignacion;
-        let fecha_asignacion_nameString = "fecha_asignacion";
-
-        let encrypt_nameParamBD = this.cliente.name_bd_column_encrypt;
-        let encrypt_nameString = "encrypt";
-
-        let encrypt_others_nameParamBD = this.cliente.name_bd_column_encrypt_others;
-        let encrypt_others_nameString = "encrypt_others";
-
-
-        let codigo_operacion_nameParamBD = this.cliente.name_bd_column_codigo_operacion;
-        if(codigo_operacion_nameParamBD == null){
-            codigo_operacion_nameParamBD = this.cliente.name_bd_column_codigo_operacion_format;
-        }
-        let codigo_operacion_nameString = "codigo_operacion";
-
-        let codigo_suscriptor;
-        let codigo_suscriptor_nameParamBD = this.cliente.name_bd_column_codigo_suscriptor;
-        let codigo_suscriptor_nameString = "codigo_suscriptor";
-
-        let hora_emision_nameParamBD = this.cliente.name_bd_column_hora_emision;
-        let hora_emision_nameString = "hora_emision";
-
-        let tipo_war_nameParamBD = this.cliente.name_bd_column_tipo_war;
-        let tipo_war_nameString = "tipo_war";
-
-
-        let status_nameParamBD = this.cliente.name_bd_column_status;
-        let status_nameString = "status";
-
-
-        let motivo_anulacion_nameParamBD = this.cliente.name_bd_column_motivo_anulacion;
-        let motivo_anulacion_nameString = "motivo_anulacion";
-
-
-        let fecha_anulacion_nameParamBD = this.cliente.name_bd_column_fecha_anulacion;
-        let fecha_anulacion_nameString = "fecha_anulacion";
-
-        let hora_anulacion_nameParamBD = this.cliente.name_bd_column_hora_anulacion;
-        let hora_anulacion_nameString = "hora_anulacion";
-
-        let neto_pagar_nameParamBD = this.cliente.name_bd_column_neto_pagar;
-        let neto_pagar_nameString = "neto_pagar";
-
-        let igtf_nameParamBD = this.cliente.name_bd_column_igtf;
-        let igtf_nameString = "igtf";
-
-        let total_pagar_nameParamBD = this.cliente.name_bd_column_total_pagar;
-        let total_pagar_nameString = "total_pagar";
-
-        let base_imponible_nameParamBD = this.cliente.name_bd_column_base_imponible;
-        let base_imponible_nameString = "base_imponible";
-
-        let monto_iva_nameParamBD = this.cliente.name_bd_column_monto_iva;
-        let monto_iva_nameString = "monto_iva";
-        
-        let monto_exento_nameParamBD = this.cliente.name_bd_column_monto_exento;
-        let monto_exento_nameString = "monto_exento";
-        
-        let no_sujeto_nameParamBD = this.cliente.name_bd_column_monto_no_sujeto;
-        let no_sujeto_nameString = "monto_no_sujeto";
-
-        let anexos_nameParamBD = this.cliente.name_bd_column_anexos;
-        let anexos_nameString = "anexos";
-
-
-        if(queryParams.numero_control){
-            numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
-            let cantidad_mostrar = 10;
-            if(queryParams.especifico_check){
-                cantidad_mostrar = 0;
-            }
-            params.push(numero_control - cantidad_mostrar); 
-            
-            if(!queryParams.especifico_check){
-                params.push(numero_control + cantidad_mostrar);
-            }
-            if (whereClause !== '') {
-                whereClause += ' OR ';
-            }
-
-            if(queryParams.especifico_check){
-                whereClause += `${numero_control_nameParamBD} = ?`;
-            }else{
-                whereClause += `${numero_control_nameParamBD} BETWEEN ? AND ?`;
-            }
-        }
-
-        if(queryParams.numero_control){
-            numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
-            let cantidad_mostrar = 10;
-            if(queryParams.especifico_check){
-                cantidad_mostrar = 0;
-            }
-            params.push(numero_control - cantidad_mostrar); 
-            
-            if(!queryParams.especifico_check){
-                params.push(numero_control + cantidad_mostrar);
-            }
-            if (whereClause !== '') {
-                whereClause += ' OR ';
-            }
-
-            if(queryParams.especifico_check){
-                whereClause += `${numero_control_nameParamBD} = ?`;
-            }else{
-                whereClause += `${numero_control_nameParamBD} BETWEEN ? AND ?`;
-            }
-        }
-
-        if(queryParams.codigo_suscriptor){
-            codigo_suscriptor = queryParams.codigo_suscriptor;
-            
-            params.push(codigo_suscriptor); 
-            
-            if (whereClause !== '') {
-                whereClause += ' OR ';
-            }
-
-            whereClause += `${codigo_suscriptor_nameParamBD} = ?`;
-        }
-        
-        if(queryParams.numero_documento){
-            let hasLetters = /[a-zA-Z]/.test(queryParams.numero_documento);
-            let hasHyphen = queryParams.numero_documento.includes('-');
-            
-            if(hasLetters || hasHyphen || this.cliente.id == 4){//si contiene letras
-                let simbolo = '-'; 
-
-                numero_documento = queryParams.numero_documento;
-                let partes = numero_documento.split(simbolo); // separa el prefijo y la parte numérica
-                
-                
-                if(!partes[1]){
-                    partes[1] = partes[0];
-                    partes[0] = "";
-                    simbolo = "";
-                }
-                
-                let prefijo = partes[0];
-                let numero = parseInt(partes[1]);
-
-                let digitos = partes[1].length; // obtiene la cantidad de dígitos
-
-                let cantidad_mostrar = 10;
-                
-                if(queryParams.especifico_check){
-                    cantidad_mostrar = 0;
-                }
-                let inicio = numero - cantidad_mostrar; // inicio del rango
-                let fin = numero + cantidad_mostrar; // fin del rango
-
-                
-                // Limpia params y agrega todos los valores en el rango al array
-                params = [];
-                for (let i = inicio; i <= fin; i++) {
-                    let doc = prefijo + simbolo + String(i).padStart(digitos, '0');
-                    params.push(doc);
-                }
-                
-                // Genera los signos de interrogación para la cláusula IN
-                let placeholders = params.map(() => '?').join(',');
-
-                // Construye la cláusula WHERE
-                if (whereClause !== '') {
-                    whereClause += ' OR ';
-                }
-                whereClause += `${numero_documento_nameParamBD} IN (${placeholders})`;
-                
-            }else{//solo son numeros
-                numero_documento = Number(queryParams.numero_documento.replace(/-/g, '').replace(/^0+/, ''));
-                let cantidad_mostrar = 10;
-                if(queryParams.especifico_check){
-                    cantidad_mostrar = 0;
-                }
-                params.push(numero_documento - cantidad_mostrar); params.push(numero_documento + cantidad_mostrar);
-                if (whereClause !== '') {
-                    whereClause += ' OR ';
-                }
-                whereClause += `${numero_documento_nameParamBD} BETWEEN ? AND ?`;
-            }
-        }
-
-        if(queryParams.tipo_fecha && queryParams.fecha_inicio && queryParams.fecha_final){
-            fecha_inicio = queryParams.fecha_inicio;
-            fecha_final = queryParams.fecha_final;
-            fecha_tipo = queryParams.tipo_fecha;
-            let fecha_selected;
-
-            if(fecha_tipo == "emision"){
-                fecha_selected = fecha_emision_nameParamBD;
-            }else if(fecha_tipo == "asignacion"){
-                fecha_selected = fecha_asignacion_nameParamBD;
-            }
-
-            params.push(fecha_inicio); params.push(fecha_final);
-            if (whereClause !== '') {
-                whereClause += ' AND ';
-            }
-            whereClause += `${fecha_selected} BETWEEN ? AND ?`;
-        }
-
-        if (queryParams.tipo_documento && queryParams.tipo_documento != "all") {
-            // Separar los valores por el carácter ';'
-            const tipo_documento_values = queryParams.tipo_documento.split(';');
-            
-            // Agregar los valores al array de parámetros
-            params.push(...tipo_documento_values);
-            
-            if (whereClause !== '') {
-                whereClause += ' AND ';
-            }
-            
-            // Construir la cláusula IN con el número correcto de placeholders
-            const placeholders = tipo_documento_values.map(() => '?').join(',');
-            whereClause += `${tipo_documento_nameParamBD} IN (${placeholders})`;
-        }
-
-        if (queryParams.serie && queryParams.serie != "all") {
-            // Separar los valores por el carácter ';'
-            const serie_values = queryParams.serie.split(';');
-            
-            // Agregar los valores al array de parámetros
-            params.push(...serie_values);
-            
-            if (whereClause !== '') {
-                whereClause += ' AND ';
-            }
-            
-            // Construir la cláusula IN con el número correcto de placeholders
-            const placeholders = serie_values.map(() => '?').join(',');
-            whereClause += `${serie_nameParamBD} IN (${placeholders})`;
-        }
-
-        if (queryParams.rif) {
-           
-            const rif = queryParams.rif;
-            
-            // Crear un array para almacenar todos los formatos
-            let allRifFormats = [];
-        
-  
-            // Eliminar los guiones del valor original
-            let rifSinGuiones = rif.replace(/-/g, '');
+        return tabla;
+    }
     
-            // Generar los diferentes formatos
-            let format1 = rif;
-            let format2 = rifSinGuiones;
-            let format3 = rifSinGuiones.slice(0, 1) + '-' + rifSinGuiones.slice(1);
-            let format4 = rifSinGuiones.slice(0, 1) + '-' + rifSinGuiones.slice(1, -1) + '-' + rifSinGuiones.slice(-1);
-            let format5 = rifSinGuiones.slice(0, -1) + '-' + rifSinGuiones.slice(-1);
-
-            // Agregar todos los formatos al array
-            allRifFormats.push(format1, format2, format3, format4, format5);
-  
-        
-            // Agregar los valores al array de parámetros
-            params.push(...allRifFormats);
-        
-            // Crear los placeholders_rif para la cláusula IN
-            const placeholders_rif = allRifFormats.map(() => '?').join(', ');
-        
-            if (whereClause !== '') {
-                whereClause += ' AND ';
-            }
-        
-            // Construir la cláusula IN con el número correcto de placeholders
-            whereClause += `${rif_nameParamBD} IN (${placeholders_rif})`;
+    // Función para inicializar la paginación
+    initializePagination(queryParams) {
+        let order = '';
+        let limit = queryParams.limit || 10;
+        let offset = ((queryParams.page || 1) - 1) * limit + 1;
+    
+        if (queryParams.order === "DESC") {
+            order = "DESC";
+        } else if (queryParams.order === "ASC") {
+            order = "ASC";
         }
-        
-
+    
+        return { order, limit, offset };
+    }
+    
+    // Función para agregar filtros al whereClause y params
+    addFilters(queryParams, params, whereClause) {
+        // Agregar filtro para numero_control
+        if (queryParams.numero_control) {
+            whereClause = this.addNumeroControlFilter(queryParams, params, whereClause);
+        }
+    
+        // Agregar filtro para codigo_suscriptor
+        if (queryParams.codigo_suscriptor) {
+            whereClause = this.addCodigoSuscriptorFilter(queryParams, params, whereClause);
+        }
+    
+        // Agregar filtro para numero_documento
+        if (queryParams.numero_documento) {
+            whereClause = this.addNumeroDocumentoFilter(queryParams, params, whereClause);
+        }
+    
+        // Agregar filtro para fechas
+        if (queryParams.tipo_fecha && queryParams.fecha_inicio && queryParams.fecha_final) {
+            whereClause = this.addFechaFilter(queryParams, params, whereClause);
+        }
+    
+        // Agregar filtro para tipo_documento
+        if (queryParams.tipo_documento && queryParams.tipo_documento !== "all") {
+            whereClause = this.addTipoDocumentoFilter(queryParams, params, whereClause);
+        }
+    
+        // Agregar filtro para serie
+        if (queryParams.serie && queryParams.serie !== "all") {
+            whereClause = this.addSerieFilter(queryParams, params, whereClause);
+        }
+    
+        // Agregar filtro para rif
+        if (queryParams.rif) {
+            whereClause = this.addRifFilter(queryParams, params, whereClause);
+        }
+    
+        // Agregar filtro para razon_social
         if (queryParams.razon_social) {
-
-            razon_social = queryParams.razon_social;
-            
-            // Agregar los valores al array de parámetros
-            params.push(razon_social);
-        
-            if (whereClause !== '') {
-                whereClause += ' AND ';
-            }
-        
-            // Construir la cláusula IN con el número correcto de placeholders
-            whereClause += `${razon_social_nameParamBD} = ?`;
+            whereClause = this.addRazonSocialFilter(queryParams, params, whereClause);
         }
-        
-        
-        if(this.cliente.name_bd_column_encrypt != null){
-            addSelect += `${encrypt_nameParamBD} as ${encrypt_nameString},`;
-        }else{
-            addSelect += `'no_encrypt' as ${encrypt_nameString},`;
+    
+        return whereClause;
+    }
+    
+    // Función para construir el select adicional
+    buildAdditionalSelect() {
+        let addSelect = '';
+    
+        if (this.cliente.name_bd_column_encrypt != null) {
+            addSelect += `${this.cliente.name_bd_column_encrypt} as encrypt,`;
+        } else {
+            addSelect += `'no_encrypt' as encrypt,`;
         }
-
-        
-
-        // Definir un array con los pares de nombres de parámetros y cadenas de texto correspondientes
+    
         const columnas = [
-            { paramBD: neto_pagar_nameParamBD, string: neto_pagar_nameString },
-            { paramBD: igtf_nameParamBD, string: igtf_nameString },
-            { paramBD: total_pagar_nameParamBD, string: total_pagar_nameString },
-            { paramBD: base_imponible_nameParamBD, string: base_imponible_nameString },
-            { paramBD: monto_iva_nameParamBD, string: monto_iva_nameString },
-            { paramBD: monto_exento_nameParamBD, string: monto_exento_nameString },
-            { paramBD: no_sujeto_nameParamBD, string: no_sujeto_nameString },
-            { paramBD: encrypt_others_nameParamBD, string: encrypt_others_nameString },
-            { paramBD: codigo_operacion_nameParamBD, string: codigo_operacion_nameString },
-            { paramBD: serie_nameParamBD, string: serie_nameString },
-            { paramBD: codigo_suscriptor_nameParamBD, string: codigo_suscriptor_nameString },
-            { paramBD: hora_emision_nameParamBD, string: hora_emision_nameString },
-            { paramBD: status_nameParamBD, string: status_nameString },
-            { paramBD: motivo_anulacion_nameParamBD, string: motivo_anulacion_nameString },
-            { paramBD: fecha_anulacion_nameParamBD, string: fecha_anulacion_nameString },
-            { paramBD: hora_anulacion_nameParamBD, string: hora_anulacion_nameString },
-
-            { paramBD: correo_cliente_nameParamBD, string: correo_cliente_nameString },
-            { paramBD: telefono_cliente_nameParamBD, string: telefono_cliente_nameString },
-            { paramBD: anexos_nameParamBD, string: anexos_nameString },
-            { paramBD: tipo_war_nameParamBD, string: tipo_war_nameString },
+            { paramBD: this.cliente.name_bd_column_neto_pagar, string: "neto_pagar" },
+            { paramBD: this.cliente.name_bd_column_igtf, string: "igtf" },
+            { paramBD: this.cliente.name_bd_column_total_pagar, string: "total_pagar" },
+            { paramBD: this.cliente.name_bd_column_base_imponible, string: "base_imponible" },
+            { paramBD: this.cliente.name_bd_column_monto_iva, string: "monto_iva" },
+            { paramBD: this.cliente.name_bd_column_monto_exento, string: "monto_exento" },
+            { paramBD: this.cliente.name_bd_column_monto_no_sujeto, string: "monto_no_sujeto" },
+            { paramBD: this.cliente.name_bd_column_encrypt_others, string: "encrypt_others" },
+            { paramBD: this.cliente.name_bd_column_codigo_operacion, string: "codigo_operacion" },
+            { paramBD: this.cliente.name_bd_column_serie, string: "serie" },
+            { paramBD: this.cliente.name_bd_column_codigo_suscriptor, string: "codigo_suscriptor" },
+            { paramBD: this.cliente.name_bd_column_hora_emision, string: "hora_emision" },
+            { paramBD: this.cliente.name_bd_column_status, string: "status" },
+            { paramBD: this.cliente.name_bd_column_motivo_anulacion, string: "motivo_anulacion" },
+            { paramBD: this.cliente.name_bd_column_fecha_anulacion, string: "fecha_anulacion" },
+            { paramBD: this.cliente.name_bd_column_hora_anulacion, string: "hora_anulacion" },
+            { paramBD: this.cliente.name_bd_column_correo_cliente, string: "correo_cliente" },
+            { paramBD: this.cliente.name_bd_column_telefono_cliente, string: "telefono_cliente" },
+            { paramBD: this.cliente.name_bd_column_anexos, string: "anexos" },
+            { paramBD: this.cliente.name_bd_column_tipo_war, string: "tipo_war" },
         ];
         
-        // Recorrer el array de columnas y construir la cadena addSelect
+    
         columnas.forEach(columna => {
             if (columna.paramBD !== null) {
                 addSelect += `${columna.paramBD} as ${columna.string},`;
@@ -497,45 +245,206 @@ export default class ConsultasCliente {
                 addSelect += `'' as ${columna.string},`;
             }
         });
-
-        //${url_documento} as url_documento
-
-        if(queryParams.limit){
-            limit = queryParams.limit
+    
+        return addSelect;
+    }
+    
+    // Función para construir la consulta
+    buildQuery(tabla, whereClause, addSelect, limit, offset, order) {
+        return `SELECT TOP ${limit} START AT ${offset}
+                    ${this.cliente.name_bd_column_numero_control} as numero_control,
+                    ${this.cliente.name_bd_column_numero_documento} as numero_documento,
+                    ${this.cliente.name_bd_column_fecha_emision} as fecha_emision,
+                    ${this.cliente.name_bd_column_fecha_asignacion} as fecha_asignacion,
+                    ${this.cliente.name_bd_column_rif} as rif,
+                    ${this.cliente.name_bd_column_razon_social} as razon_social,
+                    ${addSelect}
+                    ${this.cliente.name_bd_column_tipo_documento} as tipo_documento,
+                    '${this.cliente.rif}' as rif_prestador
+                FROM ${tabla}
+                WHERE ${whereClause}
+                ORDER BY ${this.cliente.name_bd_column_numero_control} ${order}`;
+    }
+    
+    buildColetillaQuery(queryParams) {
+        let params_coletilla = [];
+        let query_coletilla = `SELECT numero_mes FROM ${this.cliente.name_bd_table_coletilla} WHERE 1=1`;
+    
+        if (queryParams.numero_control) {
+            let numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
+            query_coletilla += ` AND ${this.cliente.name_bd_column_numero_control} = ?`;
+            params_coletilla.push(numero_control);
         }
-
-        if(queryParams.offset){
-            offset = queryParams.offset;
+    
+        if (queryParams.numero_documento) {
+            let numero_documento = queryParams.numero_documento;
+            query_coletilla += ` AND ${this.cliente.name_bd_column_numero_documento} = ?`;
+            params_coletilla.push(numero_documento);
         }
+    
+        return { query_coletilla, params_coletilla };
+    }
 
-        if(queryParams.order == "DESC"){
-            order = "DESC";
-        }
+    //funciones para filtrar
 
-        if(queryParams.order == "ASC"){
-            order = "ASC";
+    addNumeroControlFilter(queryParams, params, whereClause) {
+        let numero_control = Number(queryParams.numero_control.replace(/-/g, '').replace(/^0+/, ''));
+        let cantidad_mostrar = queryParams.especifico_check ? 0 : 10;
+        
+        params.push(numero_control - cantidad_mostrar);
+        
+        if (!queryParams.especifico_check) {
+            params.push(numero_control + cantidad_mostrar);
         }
         
-        let query = `SELECT TOP ${limit} START AT ${offset}
-                            ${numero_control_nameParamBD} as ${numero_control_nameString},
-                            ${numero_documento_nameParamBD} as ${numero_documento_nameString},
-                            ${fecha_emision_nameParamBD} as ${fecha_emision_nameString},
-                            ${fecha_asignacion_nameParamBD} as ${fecha_asignacion_nameString},
-                            ${rif_nameParamBD} as ${rif_nameString},
-                            ${razon_social_nameParamBD} as ${razon_social_nameString},
-                            ${addSelect}
-                            ${tipo_documento_nameParamBD} as ${tipo_documento_nameString},
-                            '${this.cliente.rif}' as rif_prestador
-                     FROM ${tabla}
-                     WHERE ${whereClause}
-                     ORDER BY ${numero_control_nameParamBD} ${order}`;
-        
-        console.log(query, params);
-        let result = await executeQuery(this.cliente.connections, query, params);
-        if(this.cliente.id == 10){
-            result = await addPreciosDomesa(result, this.cliente.connections);
+        if (whereClause !== '') {
+            whereClause += ' OR ';
         }
-        return result;
+    
+        if (queryParams.especifico_check) {
+            whereClause += `${this.cliente.name_bd_column_numero_control} = ?`;
+        } else {
+            whereClause += `${this.cliente.name_bd_column_numero_control} BETWEEN ? AND ?`;
+        }
+        
+        return whereClause;
+    }
+    
+    addCodigoSuscriptorFilter(queryParams, params, whereClause) {
+        params.push(queryParams.codigo_suscriptor);
+        
+        if (whereClause !== '') {
+            whereClause += ' OR ';
+        }
+    
+        whereClause += `${this.cliente.name_bd_column_codigo_suscriptor} = ?`;
+        
+        return whereClause;
+    }
+    
+    addNumeroDocumentoFilter(queryParams, params, whereClause) {
+        let numero_documento = queryParams.numero_documento;
+        let hasLetters = /[a-zA-Z]/.test(numero_documento);
+        let hasHyphen = numero_documento.includes('-');
+        
+        if (hasLetters || hasHyphen || this.cliente.id === 4) {
+            let partes = numero_documento.split('-');
+            let prefijo = partes[0];
+            let numero = parseInt(partes[1] || partes[0]);
+            let digitos = (partes[1] || partes[0]).length;
+            let cantidad_mostrar = queryParams.especifico_check ? 0 : 10;
+            let inicio = numero - cantidad_mostrar;
+            let fin = numero + cantidad_mostrar;
+    
+            params = [];
+            for (let i = inicio; i <= fin; i++) {
+                let doc = prefijo + '-' + String(i).padStart(digitos, '0');
+                params.push(doc);
+            }
+    
+            let placeholders = params.map(() => '?').join(',');
+    
+            if (whereClause !== '') {
+                whereClause += ' OR ';
+            }
+            whereClause += `${this.cliente.name_bd_column_numero_documento} IN (${placeholders})`;
+        } else {
+            let numero = Number(numero_documento.replace(/-/g, '').replace(/^0+/, ''));
+            let cantidad_mostrar = queryParams.especifico_check ? 0 : 10;
+    
+            params.push(numero - cantidad_mostrar);
+            params.push(numero + cantidad_mostrar);
+    
+            if (whereClause !== '') {
+                whereClause += ' OR ';
+            }
+            whereClause += `${this.cliente.name_bd_column_numero_documento} BETWEEN ? AND ?`;
+        }
+        
+        return whereClause;
+    }
+    
+    addFechaFilter(queryParams, params, whereClause) {
+        let fecha_selected;
+        if (queryParams.tipo_fecha === "emision") {
+            fecha_selected = this.cliente.name_bd_column_fecha_emision;
+        } else if (queryParams.tipo_fecha === "asignacion") {
+            fecha_selected = this.cliente.name_bd_column_fecha_asignacion;
+        }
+    
+        params.push(queryParams.fecha_inicio);
+        params.push(queryParams.fecha_final);
+    
+        if (whereClause !== '') {
+            whereClause += ' AND ';
+        }
+        whereClause += `${fecha_selected} BETWEEN ? AND ?`;
+        
+        return whereClause;
+    }
+    
+    addTipoDocumentoFilter(queryParams, params, whereClause) {
+        let tipo_documento_values = queryParams.tipo_documento.split(';');
+        params.push(...tipo_documento_values);
+        
+        if (whereClause !== '') {
+            whereClause += ' AND ';
+        }
+    
+        let placeholders = tipo_documento_values.map(() => '?').join(',');
+        whereClause += `${this.cliente.name_bd_column_tipo_documento} IN (${placeholders})`;
+        
+        return whereClause;
+    }
+    
+    addSerieFilter(queryParams, params, whereClause) {
+        let serie_values = queryParams.serie.split(';');
+        params.push(...serie_values);
+        
+        if (whereClause !== '') {
+            whereClause += ' AND ';
+        }
+    
+        let placeholders = serie_values.map(() => '?').join(',');
+        whereClause += `${this.cliente.name_bd_column_serie} IN (${placeholders})`;
+        
+        return whereClause;
+    }
+    
+    addRifFilter(queryParams, params, whereClause) {
+        let rif = queryParams.rif;
+        let rifSinGuiones = rif.replace(/-/g, '');
+    
+        let allRifFormats = [
+            rif,
+            rifSinGuiones,
+            rifSinGuiones.slice(0, 1) + '-' + rifSinGuiones.slice(1),
+            rifSinGuiones.slice(0, 1) + '-' + rifSinGuiones.slice(1, -1) + '-' + rifSinGuiones.slice(-1),
+            rifSinGuiones.slice(0, -1) + '-' + rifSinGuiones.slice(-1)
+        ];
+    
+        params.push(...allRifFormats);
+        let placeholders_rif = allRifFormats.map(() => '?').join(', ');
+    
+        if (whereClause !== '') {
+            whereClause += ' AND ';
+        }
+    
+        whereClause += `${this.cliente.name_bd_column_rif} IN (${placeholders_rif})`;
+        
+        return whereClause;
+    }
+    
+    addRazonSocialFilter(queryParams, params, whereClause) {
+        params.push(queryParams.razon_social);
+    
+        if (whereClause !== '') {
+            whereClause += ' AND ';
+        }
+    
+        whereClause += `${this.cliente.name_bd_column_razon_social} = ?`;
+        
+        return whereClause;
     }
     
     
