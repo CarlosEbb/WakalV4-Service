@@ -65,7 +65,38 @@ export default class ConsultasCliente {
         return 1;
     }
 
-    async getDataBusqueda(queryParams) {
+    async getDataReporte(queryParams) {
+        let params = [];
+        let whereClause = '';
+        let tabla = this.cliente.name_bd_table;
+        let addSelect = '';
+    
+        // Manejar coletilla si es necesario
+        tabla = await this.handleColetilla(queryParams, tabla);
+        
+        // Reemplazar la plantilla del mes si es necesario
+        tabla = this.replaceMesTemplate(queryParams, tabla);
+        
+        // Agregar filtros al whereClause y params
+        whereClause = this.addFilters(queryParams, params, whereClause);
+    
+        // Construir el select adicional
+        addSelect = this.buildAdditionalSelect();
+    
+        if(queryParams.tipo_reporte == 'libro_ventas'){
+            console.log(whereClause);
+        }
+
+        //let result = await executeQuery(this.cliente.connections, query, params);
+        let result;
+        if (this.cliente.id == 10) {
+            result = await addPreciosDomesa(result, this.cliente.connections);
+        }
+        
+        return result;
+    }
+
+    async getDataBusqueda(queryParams, islimit = true) {
         let params = [];
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
@@ -80,8 +111,11 @@ export default class ConsultasCliente {
         // Reemplazar la plantilla del mes si es necesario
         tabla = this.replaceMesTemplate(queryParams, tabla);
         
-        // Inicializar variables comunes
-        const { order, limit, offset } = this.initializePagination(queryParams);
+        let order, limit, offset;
+        if (islimit) {
+            // Inicializar variables comunes
+            ({ order, limit, offset } = this.initializePagination(queryParams));
+        }
     
         // Agregar filtros al whereClause y params
         whereClause = this.addFilters(queryParams, params, whereClause);
@@ -91,6 +125,7 @@ export default class ConsultasCliente {
     
         // Construir y ejecutar la consulta
         const query = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order);
+        
         console.log(query, params);
     
         let result = await executeQuery(this.cliente.connections, query, params);
@@ -250,8 +285,13 @@ export default class ConsultasCliente {
     }
     
     // Función para construir la consulta
-    buildQuery(tabla, whereClause, addSelect, limit, offset, order) {
-        return `SELECT TOP ${limit} START AT ${offset}
+    buildQuery(tabla, whereClause, addSelect, limit = null, offset = null, order = 'ASC') {
+        let limitOffsetClause = '';
+        if (limit !== null && offset !== null) {
+            limitOffsetClause = `TOP ${limit} START AT ${offset}`;
+        }
+    
+        return `SELECT ${limitOffsetClause}
                     ${this.cliente.name_bd_column_numero_control} as numero_control,
                     ${this.cliente.name_bd_column_numero_documento} as numero_documento,
                     ${this.cliente.name_bd_column_fecha_emision} as fecha_emision,

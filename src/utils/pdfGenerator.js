@@ -15,22 +15,23 @@ export const createPDF = async (content, config = {}) => {
   if (!content) throw new Error('Content es requerido');
 
   let html = true; // Por defecto asumimos que es HTML
+  let isCustomJSON = false; // Para verificar si es el nuevo formato JSON
 
   if (typeof content === 'string') {
-    // Verificamos si es una cadena que podría ser HTML
     const trimmedContent = content.trim();
     if (trimmedContent.startsWith('<') && trimmedContent.endsWith('>')) {
       html = true;
     } else {
       html = false;
     }
-  } else if (typeof content === 'object' && !Array.isArray(content)) {
-    // Verificamos si es un objeto (JSON)
-    // Validamos que tenga las propiedades esperadas: columns y body
-    if (content.columns && content.body && Array.isArray(content.columns) && Array.isArray(content.body)) {
+  } else if (typeof content === 'object') {
+    if (!Array.isArray(content) && content.columns && content.body && Array.isArray(content.columns) && Array.isArray(content.body)) {
+      html = false;
+    } else if (Array.isArray(content) && content.length > 0 && content[0].numero_control) {
+      isCustomJSON = true;
       html = false;
     } else {
-      throw new Error('El objeto JSON content no tiene la estructura esperada');
+      throw new Error('El tipo de contenido no es válido o el objeto JSON content no tiene la estructura esperada');
     }
   } else {
     throw new Error('El tipo de contenido no es válido');
@@ -132,6 +133,7 @@ export const createPDF = async (content, config = {}) => {
 
   
   if(html){
+
     const $ = cheerio.load(processHtml(content));
 
     const table = {
@@ -219,6 +221,47 @@ export const createPDF = async (content, config = {}) => {
       }
       return newRow;
     });
+
+    docDefinition.content.push({ table });
+  }else if(isCustomJSON) {
+   
+    const columns = Object.keys(content[0]);
+    const body = content.map(row => Object.values(row));
+
+    let fontSizeTemp;
+    let restarFontSize = columns.length > 15 ? 3 : 0;
+    const headerColors = ['#258d19', '#1251a0'];
+    const bodyColors = ['#fdfdfd', '#eeeced'];
+
+    body.unshift(columns);
+
+    const tableBody = body.map((row, rowIndex) => {
+      return row.map((cell, colIndex) => {
+        let fillColor = '';
+        let textColor = '';
+        let bold = false;
+        let alignment = 'center';
+
+        if (rowIndex === 0) {
+          fillColor = headerColors[colIndex % headerColors.length];
+          textColor = '#FFFFFF';
+          fontSizeTemp = docDefinition.styles.header.fontSize;
+          bold = true;
+        } else {
+          fillColor = bodyColors[(rowIndex - 1) % bodyColors.length];
+          textColor = '#000000';
+          fontSizeTemp = docDefinition.styles.cell.fontSize;
+        }
+        return { text: cell, fillColor: fillColor, color: textColor, bold: bold, alignment: alignment, fontSize: fontSizeTemp - restarFontSize, margin: [2, 2, 2, 2] };
+      });
+    });
+
+    const table = {
+      headerRows: 1,
+      dontBreakRows: true,
+      widths: columns.map(() => 'auto'),
+      body: tableBody,
+    };
 
     docDefinition.content.push({ table });
   }else{

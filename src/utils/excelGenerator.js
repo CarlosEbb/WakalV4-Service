@@ -44,22 +44,23 @@ export const createExcel = async (content, config = {}) => {
   if (!content) throw new Error('Content es requerido');
 
   let html = true; // Por defecto asumimos que es HTML
+  let isCustomJSON = false; // Para verificar si es el nuevo formato JSON
 
   if (typeof content === 'string') {
-    // Verificamos si es una cadena que podría ser HTML
     const trimmedContent = content.trim();
     if (trimmedContent.startsWith('<') && trimmedContent.endsWith('>')) {
       html = true;
     } else {
       html = false;
     }
-  } else if (typeof content === 'object' && !Array.isArray(content)) {
-    // Verificamos si es un objeto (JSON)
-    // Validamos que tenga las propiedades esperadas: columns y body
-    if (content.columns && content.body && Array.isArray(content.columns) && Array.isArray(content.body)) {
+  } else if (typeof content === 'object') {
+    if (!Array.isArray(content) && content.columns && content.body && Array.isArray(content.columns) && Array.isArray(content.body)) {
+      html = false;
+    } else if (Array.isArray(content) && content.length > 0 && content[0].numero_control) {
+      isCustomJSON = true;
       html = false;
     } else {
-      throw new Error('El objeto JSON content no tiene la estructura esperada');
+      throw new Error('El tipo de contenido no es válido o el objeto JSON content no tiene la estructura esperada');
     }
   } else {
     throw new Error('El tipo de contenido no es válido');
@@ -178,6 +179,43 @@ export const createExcel = async (content, config = {}) => {
       if (colCount > maxWidth) {
         maxWidth = colCount;
       }
+      currentRow++;
+    });
+  }else if (isCustomJSON) {
+    // Validación del formato JSON personalizado
+    const columns = Object.keys(content[0]);
+    maxWidth = columns.length;
+  
+    let currentCol = currentColglobal;
+    columns.forEach((column, index) => {
+      const cell = sheet.getCell(currentRow, currentCol + index);
+      cell.value = column;
+      cell.alignment = alignmentStyle;
+      cell.border = borderStyle;
+  
+      const backgroundColor = index % 2 === 0 ? backgroundColor1 : backgroundColor2;
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: backgroundColor }
+      };
+  
+      cell.font = whiteBold;
+      columnWidths.push(Math.min(column.length, MAX_COLUMN_WIDTH));
+    });
+    currentRow++;
+  
+    content.forEach((row) => {
+      let currentCol = currentColglobal;
+      columns.forEach((column, index) => {
+        const cell = sheet.getCell(currentRow, currentCol + index);
+        const cellValue = row[column] !== null && row[column] !== undefined ? row[column] : '';
+        cell.value = cellValue;
+        cell.alignment = alignmentStyle;
+        cell.border = borderStyle;
+        cell.font = blackBoldContend;
+        columnWidths.push(Math.min(cellValue.toString().length, MAX_COLUMN_WIDTH));
+      });
       currentRow++;
     });
   }else{
