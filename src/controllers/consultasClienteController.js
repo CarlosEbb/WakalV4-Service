@@ -180,51 +180,60 @@ export const getDataBusqueda = async (req, res) => {
 export const getDataReporte = async (req, res) => {
   try {
       let cliente;
-      const rol_id = 1;
-      const cliente_id = 1;
-      // const rol_id = req.user.rol_id;
-      // const cliente_id = req.params.cliente_id;
+      //const rol_id = 1;
+      //const cliente_id = 1;
+      const rol_id = req.user.rol_id;
+      const cliente_id = req.body.c;
+      
       if (rol_id === 1 || rol_id === 2) {
         cliente = await Cliente.findById(cliente_id);
       } else {
         const user = await User.findById(req.user.id);
         cliente = await Cliente.findById(user.cliente_id);          
       }
-      
       const consulta = new ConsultasCliente(cliente);
-      const dataControl = await consulta.getDataBusqueda(req.query, false);
+      const dataControl = await consulta.getDataBusqueda(req.body, false);
+      const tipo_reporte = req.body.tipo_reporte;
+     
+      const fechaInicio = req.body.fecha_inicio;
+      const fechaFinal = req.body.fecha_final;
+      const rangoFechas = `${fechaInicio} - ${fechaFinal}`;
+     
+      const alltittle = {
+          'libro_ventas': `Libro de Ventas ${rangoFechas}`,
+          'archivo_retorno': "Archivo Retorno"
+      };
       
-      // Generar PDF
-      // const config = {
-      //   titulo: 'Reporte Detallado Nros. de Control Asignados Providencia 0032 Art.28',
-      //   subtitulo: 'NESTLE VENEZUELA, S.A RIF J-000129266',
-      //   tituloAdicional: 'Total Numeros de Controles Asignados: 20',
-      //   tituloAdicional2: "Factura 4456",
-      //   logo: "../public/img/banner_reporte.jpg",
-      //   pageOrientation: "Landscape",
-      // };
-      // const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-      // const pdfBuffer = await createPDF(dataControl, config);
-  
-      // res.setHeader('Content-Type', 'application/pdf');
-      // res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
-      // res.end(pdfBuffer, 'binary');
-
-
-       // Generar Excel
-       const config = {
-        titulo: 'REPORTE',
-        subtitulo: `${cliente.nombre_cliente} RIF ${cliente.rif}`,
+      const config = {
+        titulo: alltittle[tipo_reporte] ?? '',
+        subtitulo: `${cliente.nombre_cliente}, RIF ${cliente.rif}`,
         logo: "../public/img/logo.jpg",
-       }
-       const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-       const workbook = await createExcel(dataControl, config);
-       // respuesta de descarga
-       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-       res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
- 
-       await workbook.xlsx.write(res);
-       res.end();
+        pageOrientation: "Landscape",
+      };
+
+      if(req.query.formato == 'excel'){
+        // Generar Excel
+        const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+        const workbook = await createExcel(dataControl, config);
+        // respuesta de descarga
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
+
+        await workbook.xlsx.write(res);
+        res.end();
+      }else{
+       // Generar PDF
+        const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+        const pdfBuffer = await createPDF(dataControl, config);
+    
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+        res.end(pdfBuffer, 'binary');
+      }
+      
+
+
+       
   } catch (error) {
       console.error('Error al obtener Reporte:', error);
       const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });

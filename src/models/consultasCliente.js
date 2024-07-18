@@ -65,45 +65,11 @@ export default class ConsultasCliente {
         return 1;
     }
 
-    async getDataReporte(queryParams) {
-        let params = [];
-        let whereClause = '';
-        let tabla = this.cliente.name_bd_table;
-        let addSelect = '';
-    
-        // Manejar coletilla si es necesario
-        tabla = await this.handleColetilla(queryParams, tabla);
-        
-        // Reemplazar la plantilla del mes si es necesario
-        tabla = this.replaceMesTemplate(queryParams, tabla);
-        
-        // Agregar filtros al whereClause y params
-        whereClause = this.addFilters(queryParams, params, whereClause);
-    
-        // Construir el select adicional
-        addSelect = this.buildAdditionalSelect();
-    
-        if(queryParams.tipo_reporte == 'libro_ventas'){
-            console.log(whereClause);
-        }
-
-        //let result = await executeQuery(this.cliente.connections, query, params);
-        let result;
-        if (this.cliente.id == 10) {
-            result = await addPreciosDomesa(result, this.cliente.connections);
-        }
-        
-        return result;
-    }
-
     async getDataBusqueda(queryParams, islimit = true) {
         let params = [];
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
         let addSelect = '';
-    
-        // Configurar URLs basadas en el entorno
-        //({ url_documento, url_documento_anexos } = this.setURLs(this.cliente));
     
         // Manejar coletilla si es necesario
         tabla = await this.handleColetilla(queryParams, tabla);
@@ -126,7 +92,6 @@ export default class ConsultasCliente {
         // Construir y ejecutar la consulta
         const query = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order);
         
-        console.log(query, params);
     
         let result = await executeQuery(this.cliente.connections, query, params);
     

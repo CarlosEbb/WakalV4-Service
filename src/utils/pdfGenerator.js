@@ -37,8 +37,8 @@ export const createPDF = async (content, config = {}) => {
     throw new Error('El tipo de contenido no es válido');
   }
 
-  const { titulo, subtitulo, tituloAdicional = '', tituloAdicional2 = '', logo, pageOrientation = 'portrait' } = config;
-
+  const { titulo, subtitulo, tituloAdicional = '', tituloAdicional2 = '', pageOrientation = 'portrait' } = config;
+  let logo = "../public/img/banner_reporte.jpg";
   let widthImage = 600;
   let heightImage = 60;
   let margintopImage = -50;
