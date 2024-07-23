@@ -2,8 +2,9 @@ import Cliente from '../models/cliente.js';
 import User from '../models/user.js';
 import ConsultasCliente from '../models/consultasCliente.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
-import { createExcel} from '../utils/excelGenerator.js';
-import { createPDF} from '../utils/pdfGenerator.js';
+import { createExcel } from '../utils/excelGenerator.js';
+import { createPDF } from '../utils/pdfGenerator.js';
+import { createFile } from '../utils/fileGenerator.js';
 
  // Datos de la tabla
  const html = `
@@ -193,6 +194,7 @@ export const getDataReporte = async (req, res) => {
       }
       const consulta = new ConsultasCliente(cliente);
       const dataControl = await consulta.getDataBusqueda(req.body, false);
+      
       const tipo_reporte = req.body.tipo_reporte;
      
       const fechaInicio = req.body.fecha_inicio;
@@ -211,9 +213,10 @@ export const getDataReporte = async (req, res) => {
         pageOrientation: "Landscape",
       };
 
-      if(req.query.formato == 'excel'){
+      const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+
+      if(req.body.formato == 'excel'){
         // Generar Excel
-        const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
         const workbook = await createExcel(dataControl, config);
         // respuesta de descarga
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -221,9 +224,25 @@ export const getDataReporte = async (req, res) => {
 
         await workbook.xlsx.write(res);
         res.end();
+      }else  if (req.body.formato === 'csv' || req.body.formato === 'txt' || req.body.formato === 'xml') {
+        // Generar archivo (CSV, TXT o XML)
+        const fileBuffer = await createFile(dataControl, req.body.formato);
+  
+        // Establecer encabezados y enviar el archivo
+        let contentType;
+        if (req.body.formato === 'csv') {
+          contentType = 'text/csv';
+        } else if (req.body.formato === 'txt') {
+          contentType = 'text/plain';
+        } else if (req.body.formato === 'xml') {
+          contentType = 'application/xml';
+        }
+  
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.${req.body.formato}"`);
+        res.send(fileBuffer);
       }else{
        // Generar PDF
-        const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
         const pdfBuffer = await createPDF(dataControl, config);
     
         res.setHeader('Content-Type', 'application/pdf');

@@ -70,7 +70,7 @@ export default class ConsultasCliente {
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
         let addSelect = '';
-    
+        
         // Manejar coletilla si es necesario
         tabla = await this.handleColetilla(queryParams, tabla);
         
@@ -85,13 +85,13 @@ export default class ConsultasCliente {
     
         // Agregar filtros al whereClause y params
         whereClause = this.addFilters(queryParams, params, whereClause);
-    
+        
         // Construir el select adicional
         addSelect = this.buildAdditionalSelect();
     
         // Construir y ejecutar la consulta
         const query = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order);
-        
+        //console.log(query);
     
         let result = await executeQuery(this.cliente.connections, query, params);
     
@@ -148,7 +148,7 @@ export default class ConsultasCliente {
     initializePagination(queryParams) {
         let order = '';
         let limit = queryParams.limit || 10;
-        let offset = ((queryParams.page || 1) - 1) * limit + 1;
+        let offset = queryParams.offset || 1;
     
         if (queryParams.order === "DESC") {
             order = "DESC";
@@ -165,6 +165,11 @@ export default class ConsultasCliente {
         if (queryParams.numero_control) {
             whereClause = this.addNumeroControlFilter(queryParams, params, whereClause);
         }
+
+        // Agregar filtro para control_inicial and control_final
+        if (queryParams.control_inicial && queryParams.control_final) {
+            whereClause = this.addControlNumberRangeFilter(queryParams, params, whereClause);
+        }
     
         // Agregar filtro para codigo_suscriptor
         if (queryParams.codigo_suscriptor) {
@@ -175,7 +180,12 @@ export default class ConsultasCliente {
         if (queryParams.numero_documento) {
             whereClause = this.addNumeroDocumentoFilter(queryParams, params, whereClause);
         }
-    
+
+        // Agregar filtro para documento_inicial and documento_final
+        if (queryParams.documento_inicial && queryParams.documento_final) {
+            whereClause = this.addNumeroDocumentoRangeFilter(queryParams, params, whereClause);
+        }
+
         // Agregar filtro para fechas
         if (queryParams.tipo_fecha && queryParams.fecha_inicio && queryParams.fecha_final) {
             whereClause = this.addFechaFilter(queryParams, params, whereClause);
@@ -252,8 +262,13 @@ export default class ConsultasCliente {
     // Función para construir la consulta
     buildQuery(tabla, whereClause, addSelect, limit = null, offset = null, order = 'ASC') {
         let limitOffsetClause = '';
+        let limitOffsetClauseString = '';
+        let offsetSQL = offset;
         if (limit !== null && offset !== null) {
-            limitOffsetClause = `TOP ${limit} START AT ${offset}`;
+            if(offset != 1){
+                limitOffsetClauseString = `START AT ${offsetSQL}`;
+            }
+            limitOffsetClause = `TOP ${limit} ${limitOffsetClauseString}`;
         }
     
         return `SELECT ${limitOffsetClause}
@@ -314,6 +329,24 @@ export default class ConsultasCliente {
         
         return whereClause;
     }
+
+    addControlNumberRangeFilter(queryParams, params, whereClause) {
+        const control_inicial = Number(queryParams.control_inicial.replace(/-/g, '').replace(/^0+/, ''));
+        const control_final = Number(queryParams.control_final.replace(/-/g, '').replace(/^0+/, ''));    
+    
+        // Añadir los valores inicial y final al array de parámetros
+        params.push(control_inicial, control_final);
+    
+        // Verificar si el whereClause no está vacío para agregar 'OR'
+        if (whereClause !== '') {
+            whereClause += ' OR ';
+        }
+    
+        // Añadir la condición de rango al whereClause
+        whereClause += `${this.cliente.name_bd_column_numero_control} BETWEEN ? AND ?`;
+        
+        return whereClause;
+    }
     
     addCodigoSuscriptorFilter(queryParams, params, whereClause) {
         params.push(queryParams.codigo_suscriptor);
@@ -368,6 +401,55 @@ export default class ConsultasCliente {
         
         return whereClause;
     }
+
+    addNumeroDocumentoRangeFilter(queryParams, params, whereClause) {
+        let documento_inicial = queryParams.documento_inicial;
+        let documento_final = queryParams.documento_final;
+    
+        let hasLettersInicial = /[a-zA-Z]/.test(documento_inicial);
+        let hasLettersFinal = /[a-zA-Z]/.test(documento_final);
+        let hasHyphenInicial = documento_inicial.includes('-');
+        let hasHyphenFinal = documento_final.includes('-');
+    
+        if ((hasLettersInicial && hasLettersFinal) || (hasHyphenInicial && hasHyphenFinal) || this.cliente.id === 4) {
+            let partesInicial = documento_inicial.split('-');
+            let partesFinal = documento_final.split('-');
+    
+            let prefijoInicial = partesInicial[0];
+            let prefijoFinal = partesFinal[0];
+            let numeroInicial = parseInt(partesInicial[1] || partesInicial[0]);
+            let numeroFinal = parseInt(partesFinal[1] || partesFinal[0]);
+    
+            let digitosInicial = (partesInicial[1] || partesInicial[0]).length;
+            let digitosFinal = (partesFinal[1] || partesFinal[0]).length;
+            
+            params = [];
+            for (let i = numeroInicial; i <= numeroFinal; i++) {
+                let doc = prefijoInicial + '-' + String(i).padStart(digitosInicial, '0');
+                params.push(doc);
+            }
+    
+            let placeholders = params.map(() => '?').join(',');
+    
+            if (whereClause !== '') {
+                whereClause += ' OR ';
+            }
+            whereClause += `${this.cliente.name_bd_column_numero_documento} IN (${placeholders})`;
+        } else {
+            let numeroInicial = Number(documento_inicial.replace(/-/g, '').replace(/^0+/, ''));
+            let numeroFinal = Number(documento_final.replace(/-/g, '').replace(/^0+/, ''));
+    
+            params.push(numeroInicial);
+            params.push(numeroFinal);
+    
+            if (whereClause !== '') {
+                whereClause += ' OR ';
+            }
+            whereClause += `${this.cliente.name_bd_column_numero_documento} BETWEEN ? AND ?`;
+        }
+        
+        return whereClause;
+    }    
     
     addFechaFilter(queryParams, params, whereClause) {
         let fecha_selected;

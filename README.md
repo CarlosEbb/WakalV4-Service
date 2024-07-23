@@ -5,6 +5,7 @@
     - Tener en cuenta un rol o un permiso para solo ver el dashboard del cliente (Solucitado por tracker)
 - Tablas dinamicas en las consultas
 - Hacer reporte de perfil de usuario
+- renovar el diseño del correo de recuperacion de contraseña
  
 
 ## Cosas por hacer (CLIENTES)
@@ -128,11 +129,17 @@
 ### 20. Cobeca
 - Revisar Este cliente es nuevo
 
+### 21. Digitel
+- Revisar Este cliente es nuevo
+
+### 22. INTER
+- Revisar Este cliente es nuevo
+
 ## Cosas por hacer (SENIAT)
 - Dashboard
 - Enviar Reportes por correo
 - REPORTE DETALLADO NUMEROS DE CONTROL ASIGNADOS PROVIDENCIA 0032 Art. 28
 - REPORTE SEMANAL  EMISORES
 - REPORTE  NUMEROS DE CONTROL MARZO 2024
-- REPORTE  NUMEROS DE CONTROL MARZO 2024
 - REPORTE ANUAL EMISORES
+- Modulo para cargar nro de factura emitida por SL para el reporte de providencia 0032 Art. 28

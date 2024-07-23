@@ -42,3 +42,4 @@ npm install kleur
 npm install clsx 
 npm install @astrojs/internal-helpers
 npm install mime
+npm install xml-js
