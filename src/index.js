@@ -58,13 +58,13 @@ app.use(compression());
 
 // Habilitar CORS para todas las rutas
 // Configuración de CORS
-// app.use(cors({
-//     origin: ['http://localhost:8001', 'http://localhost:8002', 'https://wsplusqa.solucioneslaser.com', 'https://wakalplusqa.solucioneslaser.com'],
-//     methods: ['GET', 'POST', 'DELETE', 'PUT'],
-//     allowedHeaders: ['Content-Type', 'Authorization', 'csrf-token', 'Access-Control-Allow-Headers', 'ipclient'],
-//     exposedHeaders: ['Content-Disposition'], // Exponer el encabezado Content-Disposition
-//     credentials: true  // Habilitar el envío de cookies y credenciales
-// }));
+app.use(cors({
+    origin: ['https://localhost:8002','https://localhost:8001','http://localhost:8001', 'http://localhost:8002', 'https://wsplusqa.solucioneslaser.com', 'https://wakalplusqa.solucioneslaser.com'],
+    methods: ['GET', 'POST', 'DELETE', 'PUT'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'csrf-token', 'Access-Control-Allow-Headers', 'ipclient'],
+    exposedHeaders: ['Content-Disposition'], // Exponer el encabezado Content-Disposition
+    credentials: true  // Habilitar el envío de cookies y credenciales
+}));
 
 // Middleware para servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
