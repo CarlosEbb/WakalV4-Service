@@ -93,6 +93,7 @@ export default class ConsultasCliente {
         const query = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order);
         //console.log(query);
     
+        console.log(query, params);
         let result = await executeQuery(this.cliente.connections, query, params);
     
         if (this.cliente.id == 10) {
