@@ -87,13 +87,13 @@ export default class ConsultasCliente {
         whereClause = this.addFilters(queryParams, params, whereClause);
         
         // Construir el select adicional
-        addSelect = this.buildAdditionalSelect();
+        addSelect = this.buildAdditionalSelect(queryParams);
     
         // Construir y ejecutar la consulta
         const query = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order);
         //console.log(query);
     
-        console.log(query, params);
+        //console.log(query, params);
         let result = await executeQuery(this.cliente.connections, query, params);
     
         if (this.cliente.id == 10) {
@@ -216,16 +216,19 @@ export default class ConsultasCliente {
     }
     
     // Función para construir el select adicional
-    buildAdditionalSelect() {
-        let addSelect = '';
-    
-        if (this.cliente.name_bd_column_encrypt != null) {
-            addSelect += `${this.cliente.name_bd_column_encrypt} as encrypt,`;
-        } else {
-            addSelect += `'no_encrypt' as encrypt,`;
+    buildAdditionalSelect(queryParams) {
+        let addSelect = ',';
+        
+        if(!queryParams.config_params){
+            if (this.cliente.name_bd_column_encrypt != null) {
+                addSelect += `${this.cliente.name_bd_column_encrypt} as encrypt,`;
+            } else {
+                addSelect += `'no_encrypt' as encrypt,`;
+            }
         }
     
         const columnas = [
+            { paramBD: this.cliente.name_bd_column_rif, string: "rif" },
             { paramBD: this.cliente.name_bd_column_neto_pagar, string: "neto_pagar" },
             { paramBD: this.cliente.name_bd_column_igtf, string: "igtf" },
             { paramBD: this.cliente.name_bd_column_total_pagar, string: "total_pagar" },
@@ -244,18 +247,32 @@ export default class ConsultasCliente {
             { paramBD: this.cliente.name_bd_column_hora_anulacion, string: "hora_anulacion" },
             { paramBD: this.cliente.name_bd_column_correo_cliente, string: "correo_cliente" },
             { paramBD: this.cliente.name_bd_column_telefono_cliente, string: "telefono_cliente" },
+            { paramBD: this.cliente.name_bd_column_razon_social, string: "razon_social" },
             { paramBD: this.cliente.name_bd_column_anexos, string: "anexos" },
             { paramBD: this.cliente.name_bd_column_tipo_war, string: "tipo_war" },
+            { paramBD: `'${this.cliente.rif}'`, string: "rif_prestador" },
+
         ];
         
+        // Filtrar columnas basadas en queryParams.config_params si está presente
+        const columnasFiltradas = queryParams.config_params
+            ? columnas.filter(columna => queryParams.config_params.includes(columna.string))
+            : columnas;
     
-        columnas.forEach(columna => {
+        //console.log(queryParams.config_params);
+
+        columnasFiltradas.forEach(columna => {
             if (columna.paramBD !== null) {
                 addSelect += `${columna.paramBD} as ${columna.string},`;
             } else {
                 addSelect += `'' as ${columna.string},`;
             }
         });
+
+         // Quitar el último carácter si es una coma
+        if (addSelect.endsWith(',')) {
+            addSelect = addSelect.slice(0, -1);
+        }
     
         return addSelect;
     }
@@ -273,15 +290,13 @@ export default class ConsultasCliente {
         }
     
         return `SELECT ${limitOffsetClause}
+                    ROW_NUMBER() OVER (ORDER BY ${this.cliente.name_bd_column_numero_control}) AS Nro,
                     ${this.cliente.name_bd_column_numero_control} as numero_control,
                     ${this.cliente.name_bd_column_numero_documento} as numero_documento,
-                    ${this.cliente.name_bd_column_fecha_emision} as fecha_emision,
-                    ${this.cliente.name_bd_column_fecha_asignacion} as fecha_asignacion,
-                    ${this.cliente.name_bd_column_rif} as rif,
-                    ${this.cliente.name_bd_column_razon_social} as razon_social,
-                    ${addSelect}
                     ${this.cliente.name_bd_column_tipo_documento} as tipo_documento,
-                    '${this.cliente.rif}' as rif_prestador
+                    ${this.cliente.name_bd_column_fecha_emision} as fecha_emision,
+                    ${this.cliente.name_bd_column_fecha_asignacion} as fecha_asignacion
+                    ${addSelect}
                 FROM ${tabla}
                 WHERE ${whereClause}
                 ORDER BY ${this.cliente.name_bd_column_numero_control} ${order}`;

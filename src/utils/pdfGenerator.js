@@ -224,12 +224,22 @@ export const createPDF = async (content, config = {}) => {
 
     docDefinition.content.push({ table });
   }else if(isCustomJSON) {
+    // Reemplaza las claves en columns
+    let columns = Object.keys(content[0]);
+    if(config.config_params){
+      // Mapea los valores a los nombres
+      const nameMap = config.config_params.reduce((acc, { value, nombre }) => {
+        acc[value] = nombre;
+        return acc;
+      }, {});
+
+      columns = columns.map(key => nameMap[key] || key);
+    }
    
-    const columns = Object.keys(content[0]);
     const body = content.map(row => Object.values(row));
 
     let fontSizeTemp;
-    let restarFontSize = columns.length > 15 ? 3 : 0;
+    let restarFontSize = columns.length > 10 ? 3 : 0;
     const headerColors = ['#258d19', '#1251a0'];
     const bodyColors = ['#fdfdfd', '#eeeced'];
 
@@ -259,7 +269,13 @@ export const createPDF = async (content, config = {}) => {
     const table = {
       headerRows: 1,
       dontBreakRows: true,
-      widths: columns.map(() => 'auto'),
+      widths: config.config_params
+        ? columns.length === 6
+          ? ['auto', ...columns.slice(1).map(() => '*')] // Si hay exactamente 6 columnas, la primera 'auto', las demás '*'
+          : columns.length >= 14
+          ? [...columns.slice(0, -1).map(() => 'auto'), '*'] // Si hay 14 o más columnas, todas 'auto' excepto la última que será '*'
+          : columns.map((col, index) => index < 6 ? 'auto' : '*') // Si hay más de 6 columnas pero menos de 14, las primeras 6 'auto', las demás '*'
+        : [...columns.slice(0, -1).map(() => 'auto'), '*'], // Si config.config_params no está disponible, todas 'auto' menos la última '*'
       body: tableBody,
     };
 

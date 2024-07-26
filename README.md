@@ -127,13 +127,13 @@
     - FECHA DE EMISION
 - <span style="color: green;">◆</span>Libro de Ventas
 ### 20. Cobeca
-- Revisar Este cliente es nuevo
+- <span style="color: purple;">◆</span>Reporte Archivo Retorno
 
 ### 21. Digitel
 - Revisar Este cliente es nuevo
 
 ### 22. INTER
-- Revisar Este cliente es nuevo
+- <span style="color: purple;">◆</span>Reporte Archivo Retorno
 
 ## Cosas por hacer (SENIAT)
 - Dashboard

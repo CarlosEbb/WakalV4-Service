@@ -211,8 +211,9 @@ export const getDataReporte = async (req, res) => {
         subtitulo: `${cliente.nombre_cliente}, RIF ${cliente.rif}`,
         logo: "../public/img/logo.jpg",
         pageOrientation: "Landscape",
+        config_params: JSON.parse(req.body.name_config_params),
       };
-
+      console.log(req.body.name_config_params);
       const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
 
       if(req.body.formato == 'excel'){
