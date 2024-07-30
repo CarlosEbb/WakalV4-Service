@@ -4,7 +4,7 @@ import express from 'express';
 import multer from 'multer';
 const router = express.Router();
 
-import {getAllUsers, createUsuario, getUserById, updateUser, deleteUser} from '../controllers/userController.js';
+import {getAllUsers, createUsuario, getUserById, updateUser, deleteUser, getUserByIdReporte} from '../controllers/userController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import checkRolePermissions from '../middlewares/checkRolePermissions.js';
 import auditMiddleware from '../middlewares/auditMiddleware.js';
@@ -20,6 +20,9 @@ router.post('/', authMiddleware, checkRolePermissions([1, 2, 3]), upload.single(
 
 // Ruta para obtener un usuario por su ID
 router.get('/:id', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getUserById);
+
+// Ruta para obtener un usuario por su ID en PDF
+router.get('/:id/reporte', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getUserByIdReporte);
 
 // Ruta para actualizar un usuario por su ID
 router.put('/:id', authMiddleware, checkRolePermissions([1, 2, 3]), upload.single('img_profile_file'), auditMiddleware, updateUser);

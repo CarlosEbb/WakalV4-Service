@@ -172,4 +172,7 @@ export function aplicarFormatoNrocontrol(numero, cant = 8) {
     }
 }
 
+export function replaceVariablesInHtml(html, variables) {
+    return html.replace(/{{(.*?)}}/g, (_, key) => variables[key.trim()] || '');
+};
 

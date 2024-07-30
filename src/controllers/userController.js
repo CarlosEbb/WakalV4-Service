@@ -5,10 +5,17 @@ import BlacklistedPassword from '../models/blacklistedPassword.js';
 import Cliente from '../models/cliente.js';
 import UserCliente from '../models/userCliente.js';
 import { createJSONResponse } from '../utils/responseUtils.js';
-import { limpiarObjeto, saveImage, deleteImage } from '../utils/tools.js';
+import { limpiarObjeto, saveImage, deleteImage, replaceVariablesInHtml } from '../utils/tools.js';
 import Joi from 'joi';
 import fs from 'fs';
+import path from 'path';
 import bcrypt from 'bcrypt';
+import { createExcel } from '../utils/excelGenerator.js';
+import { createPDF } from '../utils/pdfGenerator.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Metodo para obtener todos los usuarios
 export const getAllUsers = async (req, res) => {
@@ -47,6 +54,44 @@ export const getUserById = async (req, res) => {
         return res.status(500).json(jsonResponse);
     }
 };
+
+// Metodo para obtener un usuario por su ID Reporte
+export const getUserByIdReporte = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId);
+        if (user) {
+            console.log(user);
+            const config = {
+                titulo: 'Reporte Perfil de Usuario',
+                subtitulo: '',
+                logo: "../public/img/banner_reporte.jpg",
+            };
+
+            const htmlFilePath = path.resolve(__dirname, '../views/Reports/PerfilUsuario.html');
+            const html = fs.readFileSync(htmlFilePath, 'utf8');
+            
+            // Reemplazar variables en el HTML
+            const htmlWithUserData = replaceVariablesInHtml(html, user);
+
+            const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+            const pdfBuffer = await createPDF(htmlWithUserData, config);
+        
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+            res.end(pdfBuffer, 'binary');
+            
+        } else {
+            const jsonResponse = createJSONResponse(404, 'Usuario no encontrado', {});
+            return res.status(404).json(jsonResponse);
+        }
+    } catch (error) {
+        console.error('Error al obtener el usuario por ID:', error);
+        const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+        return res.status(500).json(jsonResponse);
+    }
+};
+
 
 
 // Definir el esquema de validación con Joi

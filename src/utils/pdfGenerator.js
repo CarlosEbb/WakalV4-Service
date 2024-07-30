@@ -132,97 +132,99 @@ export const createPDF = async (content, config = {}) => {
 
 
   
-  if(html){
-
+  if (html) {
     const $ = cheerio.load(processHtml(content));
-
-    const table = {
-      headerRows: 2,
-      widths: [],
-      body: [],
-    };
-
-    $('table thead tr').each((i, tr) => {
-      const row = [];
-      $(tr).find('td').each((j, td) => {
-        const text = $(td).text().trim();
-        const colspan = parseInt($(td).attr('colspan')) || 1;
-        const rowspan = parseInt($(td).attr('rowspan')) || 1;
-
-        row.push({
-          text,
-          style: 'header',
-          colSpan: colspan,
-          rowSpan: rowspan,
-          height: rowspan > 1 ? rowspan * 20 : undefined,
+    
+    // Selecciona todas las tablas
+    $('table').each((index, tableElement) => {
+      const table = {
+        headerRows: 2,
+        widths: [],
+        body: [],
+      };
+  
+      $(tableElement).find('thead tr').each((i, tr) => {
+        const row = [];
+        $(tr).find('td').each((j, td) => {
+          const text = $(td).text().trim();
+          const colspan = parseInt($(td).attr('colspan')) || 1;
+          const rowspan = parseInt($(td).attr('rowspan')) || 1;
+  
+          row.push({
+            text,
+            style: 'header',
+            colSpan: colspan,
+            rowSpan: rowspan,
+            height: rowspan > 1 ? rowspan * 20 : undefined,
+          });
+  
+          for (let k = 1; k < colspan; k++) {
+            row.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
+          }
         });
-
-        for (let k = 1; k < colspan; k++) {
-          row.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
-        }
+        table.body.push(row);
       });
-      table.body.push(row);
-    });
-
-    $('table tbody tr').each((i, tr) => {
-      const row = [];
-      $(tr).find('td').each((j, td) => {
-        const text = $(td).text().trim();
-        const colspan = parseInt($(td).attr('colspan')) || 1;
-        const rowspan = parseInt($(td).attr('rowspan')) || 1;
-        const style = $(td).hasClass('gray') ? 'grayCell' : 'cell';
-
-        row.push({
-          text,
-          style,
-          colSpan: colspan,
-          rowSpan: rowspan,
-          margin: [2, 2, 2, 2],
-          fit: [100, 100],
-          lineHeight: 1.2,
+  
+      $(tableElement).find('tbody tr').each((i, tr) => {
+        const row = [];
+        $(tr).find('td').each((j, td) => {
+          const text = $(td).text().trim();
+          const colspan = parseInt($(td).attr('colspan')) || 1;
+          const rowspan = parseInt($(td).attr('rowspan')) || 1;
+          const style = $(td).hasClass('gray') ? 'grayCell' : 'cell';
+  
+          row.push({
+            text,
+            style,
+            colSpan: colspan,
+            rowSpan: rowspan,
+            margin: [2, 2, 2, 2],
+            fit: [100, 100],
+            lineHeight: 1.2,
+          });
+  
+          for (let k = 1; k < colspan; k++) {
+            row.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
+          }
         });
-
-        for (let k = 1; k < colspan; k++) {
-          row.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
-        }
+        table.body.push(row);
       });
-      table.body.push(row);
-    });
-
-    $('table tfoot tr').each((i, tr) => {
-      const row = [];
-      $(tr).find('td').each((j, td) => {
-        const text = $(td).text().trim();
-        const colspan = parseInt($(td).attr('colspan')) || 1;
-        const rowspan = parseInt($(td).attr('rowspan')) || 1;
-
-        row.push({
-          text,
-          style: 'footer',
-          colSpan: colspan,
-          rowSpan: rowspan,
-          height: rowspan > 1 ? rowspan * 20 : undefined,
+  
+      $(tableElement).find('tfoot tr').each((i, tr) => {
+        const row = [];
+        $(tr).find('td').each((j, td) => {
+          const text = $(td).text().trim();
+          const colspan = parseInt($(td).attr('colspan')) || 1;
+          const rowspan = parseInt($(td).attr('rowspan')) || 1;
+  
+          row.push({
+            text,
+            style: 'footer',
+            colSpan: colspan,
+            rowSpan: rowspan,
+            height: rowspan > 1 ? rowspan * 20 : undefined,
+          });
+  
+          for (let k = 1; k < colspan; k++) {
+            row.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
+          }
         });
-
-        for (let k = 1; k < colspan; k++) {
-          row.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
-        }
+        table.body.push(row);
       });
-      table.body.push(row);
+  
+      const maxCols = Math.max(...table.body.map(row => row.length));
+      table.widths = Array(maxCols).fill('*');
+  
+      table.body = table.body.map(row => {
+        const newRow = [...row];
+        while (newRow.length < maxCols) {
+          newRow.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
+        }
+        return newRow;
+      });
+  
+      docDefinition.content.push({ table });
     });
-
-    const maxCols = Math.max(...table.body.map(row => row.length));
-    table.widths = Array(maxCols).fill('*');
-
-    table.body = table.body.map(row => {
-      const newRow = [...row];
-      while (newRow.length < maxCols) {
-        newRow.push({ text: '', margin: [2, 2, 2, 2], fit: [100, 100] });
-      }
-      return newRow;
-    });
-
-    docDefinition.content.push({ table });
   }else if(isCustomJSON) {
     // Reemplaza las claves en columns
     let columns = Object.keys(content[0]);

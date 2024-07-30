@@ -9,6 +9,39 @@ import { createFile } from '../utils/fileGenerator.js';
  // Datos de la tabla
  const html = `
  <table>
+    <thead>
+        <tr>
+            <td colspan="2">1. INFORMACIÓN PERSONAL</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+           <td>Nombre y Apellido: {{nombre}} {{apellido}}</td>
+           <td>Cédula: {{prefijo_cedula}}{{cedula}}</td>
+        </tr>
+        
+         <tr>
+            <td>Usuario: {{username}}</td>
+            <td>Departamento: {{department}}</td>
+         </tr>
+         <tr>
+            <td>Teléfono: {{cod_area}}-{{telefono}}</td>
+            <td>Cargo: {{cargo}}</td>
+         </tr>
+         <tr>
+            <td>Jurisdicción (Estado): {{jurisdiccion_estado}}</td>
+            <td>Jurisdicción (Sector): {{jurisdiccion_sector}}</td>
+         </tr>
+         <tr>
+            <td>Fecha de registro: {{created_at}}</td>
+            <td>Fecha de Expiración de usuario: {{access_expiration}}</td>
+         </tr>
+    </tbody>
+</table>
+
+ `;
+ const html2 = `
+ <table>
 <thead>
 <tr>
 <td rowspan="2">SERIE</td>
@@ -377,11 +410,11 @@ export const getDataPDF = async (req, res) => {
       tituloAdicional: 'Total Numeros de Controles Asignados: 20',
       tituloAdicional2: "Factura 4456",
       logo: "../public/img/banner_reporte.jpg",
-      pageOrientation: "Landscape",
+      //pageOrientation: "Landscape",
     };
 
     const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
-    const pdfBuffer = await createPDF(content, config);
+    const pdfBuffer = await createPDF(html, config);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
