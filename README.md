@@ -1,6 +1,5 @@
 # Estatus del proyecto
 ## Cosas por hacer (GENERAL)
-- Cambiar el diseño del correo de recuperacion
 - Modulo de permisologia
     - Tener en cuenta un rol o un permiso para solo ver el dashboard del cliente (Solucitado por tracker)
 - Tablas dinamicas en las consultas
