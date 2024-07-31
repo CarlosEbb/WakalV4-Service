@@ -148,7 +148,7 @@ export default class Cliente {
     // Método para obtener todos los clientes que no han sido eliminados lógicamente
     static async getAll() {
         try {
-            const query = 'SELECT * FROM clientes WHERE enabled = 1 --order by nombre_cliente';
+            const query = 'SELECT * FROM clientes WHERE enabled = 1 order by nombre_cliente';
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, query);
             return result;
         } catch (error) {
