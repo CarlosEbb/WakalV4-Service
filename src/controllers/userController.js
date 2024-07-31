@@ -13,6 +13,7 @@ import bcrypt from 'bcrypt';
 import { createExcel } from '../utils/excelGenerator.js';
 import { createPDF } from '../utils/pdfGenerator.js';
 import { fileURLToPath } from 'url';
+import { sendEmail } from '../utils/emailController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -61,7 +62,6 @@ export const getUserByIdReporte = async (req, res) => {
         const userId = req.params.id;
         const user = await User.findById(userId);
         if (user) {
-            console.log(user);
             const config = {
                 titulo: 'Reporte Perfil de Usuario',
                 subtitulo: '',
@@ -76,11 +76,27 @@ export const getUserByIdReporte = async (req, res) => {
 
             const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
             const pdfBuffer = await createPDF(htmlWithUserData, config);
-        
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
-            res.end(pdfBuffer, 'binary');
-            
+console.log(req.body.email);
+            if(req.body.email){
+                // Configurar adjuntos
+                const attachments = [{
+                    filename: `${filename}.pdf`,
+                    content: pdfBuffer
+                }];
+    
+                // Enviar el correo con el PDF adjunto
+                await sendEmail(req.body.email, 'Tu reporte de perfil', 'Adjunto encontrarás tu reporte de perfil.', attachments);
+
+                const jsonResponse = createJSONResponse(200, 'reporte enviado correctamente.', {});
+                return res.status(200).json(jsonResponse);
+            }else{
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+                res.end(pdfBuffer, 'binary');
+            }
+
+           
+
         } else {
             const jsonResponse = createJSONResponse(404, 'Usuario no encontrado', {});
             return res.status(404).json(jsonResponse);

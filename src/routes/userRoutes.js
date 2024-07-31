@@ -22,7 +22,7 @@ router.post('/', authMiddleware, checkRolePermissions([1, 2, 3]), upload.single(
 router.get('/:id', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getUserById);
 
 // Ruta para obtener un usuario por su ID en PDF
-router.get('/:id/reporte', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getUserByIdReporte);
+router.post('/:id/reporte', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getUserByIdReporte);
 
 // Ruta para actualizar un usuario por su ID
 router.put('/:id', authMiddleware, checkRolePermissions([1, 2, 3]), upload.single('img_profile_file'), auditMiddleware, updateUser);

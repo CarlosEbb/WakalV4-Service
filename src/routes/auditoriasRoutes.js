@@ -9,6 +9,6 @@ import checkRolePermissions from '../middlewares/checkRolePermissions.js';
 import auditMiddleware from '../middlewares/auditMiddleware.js';
 
 // Ruta para obtener todos los usuarios
-router.get('/', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getAllAuditorias);
+router.get('/', authMiddleware, checkRolePermissions([1, 2, 3]), getAllAuditorias);
 
 export default router;
