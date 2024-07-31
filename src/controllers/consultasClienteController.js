@@ -199,9 +199,8 @@ export const getDataBusqueda = async (req, res) => {
       }
 
       const consulta = new ConsultasCliente(cliente);
-      const dataControl = await consulta.getDataBusqueda(req.query);
-
-      const jsonResponse = createJSONResponse(200, 'Busqueda obtenida correctamente', dataControl);
+      const { data, totalCount } = await consulta.getDataBusqueda(req.query);
+      const jsonResponse = createJSONResponse(200, 'Busqueda obtenida correctamente', data, { totalCount });
       return res.status(200).json(jsonResponse);
   } catch (error) {
       console.error('Error al obtener Busqueda:', error);
@@ -226,7 +225,7 @@ export const getDataReporte = async (req, res) => {
         cliente = await Cliente.findById(user.cliente_id);          
       }
       const consulta = new ConsultasCliente(cliente);
-      const dataControl = await consulta.getDataBusqueda(req.body, false);
+      const { data } = await consulta.getDataBusqueda(req.body, false);
       
       const tipo_reporte = req.body.tipo_reporte;
      
@@ -251,7 +250,7 @@ export const getDataReporte = async (req, res) => {
 
       if(req.body.formato == 'excel'){
         // Generar Excel
-        const workbook = await createExcel(dataControl, config);
+        const workbook = await createExcel(data, config);
         // respuesta de descarga
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
@@ -260,7 +259,7 @@ export const getDataReporte = async (req, res) => {
         res.end();
       }else  if (req.body.formato === 'csv' || req.body.formato === 'txt' || req.body.formato === 'xml') {
         // Generar archivo (CSV, TXT o XML)
-        const fileBuffer = await createFile(dataControl, req.body.formato);
+        const fileBuffer = await createFile(data, req.body.formato);
   
         // Establecer encabezados y enviar el archivo
         let contentType;
@@ -277,7 +276,7 @@ export const getDataReporte = async (req, res) => {
         res.send(fileBuffer);
       }else{
        // Generar PDF
-        const pdfBuffer = await createPDF(dataControl, config);
+        const pdfBuffer = await createPDF(data, config);
     
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);

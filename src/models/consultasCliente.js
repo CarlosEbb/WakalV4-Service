@@ -89,18 +89,25 @@ export default class ConsultasCliente {
         // Construir el select adicional
         addSelect = this.buildAdditionalSelect(queryParams);
     
-        // Construir y ejecutar la consulta
-        const query = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order);
-        //console.log(query);
+        let totalCount = 0;
+
+        if (islimit && offset == 1) {
+            
+            // Construir y ejecutar la consulta para el conteo
+            const countQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, true);
+            let countResult = await executeQuery(this.cliente.connections, countQuery, params);
+            totalCount = countResult[0]?.['COUNT()'] || 0;
+        }
     
-        //console.log(query, params);
-        let result = await executeQuery(this.cliente.connections, query, params);
+        // Construir y ejecutar la consulta para los datos
+        const dataQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, false);
+        let dataResult = await executeQuery(this.cliente.connections, dataQuery, params);
     
         if (this.cliente.id == 10) {
-            result = await addPreciosDomesa(result, this.cliente.connections);
+            dataResult = await addPreciosDomesa(dataResult, this.cliente.connections);
         }
         
-        return result;
+        return islimit ? { data: dataResult, totalCount: totalCount } : { data: dataResult };
     }
     
     
@@ -278,7 +285,13 @@ export default class ConsultasCliente {
     }
     
     // Función para construir la consulta
-    buildQuery(tabla, whereClause, addSelect, limit = null, offset = null, order = 'ASC') {
+    buildQuery(tabla, whereClause, addSelect, limit = null, offset = null, order = 'ASC', isCount = false) {
+        if (isCount) {
+            return `SELECT COUNT(*)
+                    FROM ${tabla}
+                    WHERE ${whereClause}`;
+        }
+    
         let limitOffsetClause = '';
         let limitOffsetClauseString = '';
         let offsetSQL = offset;

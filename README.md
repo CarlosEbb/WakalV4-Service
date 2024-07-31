@@ -3,9 +3,7 @@
 - Modulo de permisologia
     - Tener en cuenta un rol o un permiso para solo ver el dashboard del cliente (Solucitado por tracker)
 - Tablas dinamicas en las consultas
-- Hacer reporte de perfil de usuario
 - renovar el diseño del correo de recuperacion de contraseña
- 
 
 ## Cosas por hacer (CLIENTES)
 ### 1. Cirion
