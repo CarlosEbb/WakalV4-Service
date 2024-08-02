@@ -24,5 +24,5 @@ export async function generateResetToken(userId) {
 }
 
 export async function generateAuthToken(user) {
-    return jwt.sign({ id: user.id, rol_id: user.rol_id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    return jwt.sign({ id: user.id, rol_id: user.rol_id }, process.env.JWT_SECRET, { expiresIn: '10m' });
 }
