@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { js2xml } from 'xml-js'
+import { js2xml } from 'xml-js';
 
 function escapeCsvValue(value) {
   if (value === null || value === undefined) {
@@ -45,13 +45,22 @@ function jsonToXml(jsonArray) {
 
 export async function createFile(data, format) {
   let content;
-  
-  if (format === 'xml') {
-    content = jsonToXml(data);
+
+  if (data.length === 0) {
+    if (format === 'xml') {
+      content = '<root>\n    <message>No hay datos</message>\n</root>';
+    } else {
+      const delimiter = format === 'csv' ? ';' : '|';
+      content = `No hay datos${delimiter}No hay datos`;
+    }
   } else {
-    const delimiter = format === 'csv' ? ';' : '|';
-    const isCsv = format === 'csv';
-    content = jsonToDelimitedString(data, delimiter, isCsv);
+    if (format === 'xml') {
+      content = jsonToXml(data);
+    } else {
+      const delimiter = format === 'csv' ? ';' : '|';
+      const isCsv = format === 'csv';
+      content = jsonToDelimitedString(data, delimiter, isCsv);
+    }
   }
   
   return Buffer.from(content, 'utf8');

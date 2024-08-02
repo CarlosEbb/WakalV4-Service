@@ -31,10 +31,10 @@ export const createPDF = async (content, config = {}) => {
       isCustomJSON = true;
       html = false;
     } else {
-      throw new Error('El tipo de contenido no es válido o el objeto JSON content no tiene la estructura esperada');
+      return generateErrorPDF('No hay resultados que coincidan con los filtros aplicados.');
     }
   } else {
-    throw new Error('El tipo de contenido no es válido');
+    return generateErrorPDF('El tipo de contenido no es válido');
   }
 
   const { titulo, subtitulo, tituloAdicional = '', tituloAdicional2 = '', pageOrientation = 'portrait' } = config;
@@ -386,4 +386,31 @@ const getBase64FromFile = (filePath) => {
 export function getTextWidth(text, fontSize) {
   const approxCharWidth = 0.6 * fontSize;
   return text.length * approxCharWidth;
+}
+
+function generateErrorPDF(errorMessage) {
+  const docDefinition = {
+    content: [
+      { text: 'Error', style: 'header' },
+      { text: errorMessage, style: 'error' }
+    ],
+    styles: {
+      header: {
+        fontSize: 18,
+        bold: true,
+        margin: [0, 0, 0, 10]
+      },
+      error: {
+        fontSize: 12,
+        color: 'red'
+      }
+    }
+  };
+
+  const pdfDoc = pdfMake.createPdf(docDefinition);
+  return new Promise((resolve, reject) => {
+    pdfDoc.getBuffer(buffer => {
+      resolve(buffer);
+    });
+  });
 }

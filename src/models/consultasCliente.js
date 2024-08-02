@@ -92,13 +92,12 @@ export default class ConsultasCliente {
         let totalCount = 0;
 
         if (islimit && offset == 1) {
-            
             // Construir y ejecutar la consulta para el conteo
             const countQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, true);
             let countResult = await executeQuery(this.cliente.connections, countQuery, params);
             totalCount = countResult[0]?.['COUNT()'] || 0;
         }
-    
+        console.log(whereClause, params);
         // Construir y ejecutar la consulta para los datos
         const dataQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, false);
         let dataResult = await executeQuery(this.cliente.connections, dataQuery, params);
@@ -106,7 +105,7 @@ export default class ConsultasCliente {
         if (this.cliente.id == 10) {
             dataResult = await addPreciosDomesa(dataResult, this.cliente.connections);
         }
-        
+
         return islimit ? { data: dataResult, totalCount: totalCount } : { data: dataResult };
     }
     

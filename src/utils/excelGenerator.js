@@ -40,6 +40,16 @@ const blackBoldContend = {
 
 const MAX_COLUMN_WIDTH = 15; // Define el ancho máximo para las columnas
 
+const generateErrorExcel = (errorMessage) => {
+  const workbook = new Excel.Workbook();
+  const sheet = workbook.addWorksheet('Error Report');
+
+  sheet.getCell('A1').value = 'Error al generar el reporte';
+  sheet.getCell('A2').value = errorMessage;
+
+  return workbook;
+};
+
 export const createExcel = async (content, config = {}) => {
   if (!content) throw new Error('Content es requerido');
 
@@ -60,10 +70,12 @@ export const createExcel = async (content, config = {}) => {
       isCustomJSON = true;
       html = false;
     } else {
-      throw new Error('El tipo de contenido no es válido o el objeto JSON content no tiene la estructura esperada');
+      return await generateErrorExcel('No hay resultados que coincidan con los filtros aplicados.');
+      //throw new Error('El tipo de contenido no es válido o el objeto JSON content no tiene la estructura esperada');
     }
   } else {
-    throw new Error('El tipo de contenido no es válido');
+    //throw new Error('El tipo de contenido no es válido');
+    return await generateErrorExcel('El tipo de contenido no es válido');
   }
 
   const { titulo, subtitulo, tituloAdicional, logo } = config;
@@ -309,3 +321,5 @@ export const createExcel = async (content, config = {}) => {
 
   return workbook;
 };
+
+

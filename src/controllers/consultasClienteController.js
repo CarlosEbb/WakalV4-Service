@@ -226,7 +226,7 @@ export const getDataReporte = async (req, res) => {
       }
       const consulta = new ConsultasCliente(cliente);
       const { data } = await consulta.getDataBusqueda(req.body, false);
-      
+
       const tipo_reporte = req.body.tipo_reporte;
      
       const fechaInicio = req.body.fecha_inicio;
