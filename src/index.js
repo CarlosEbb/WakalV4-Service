@@ -16,6 +16,8 @@ import clienteRoutes from './routes/clienteRoutes.js';
 import consultaRoutes from './routes/consultaRoutes.js';
 import consultasClienteRoutes from './routes/consultasClienteRoutes.js';
 import migracionRoutes from './routes/migracionUsuariosRoutes.js';
+import permisosRoutes from './routes/permisosRoutes.js';
+import permisosUsuariosRoutes from './routes/permisosUsuariosRoutes.js';
 
 
 import { createJSONResponse } from './utils/responseUtils.js';
@@ -107,6 +109,12 @@ app.get('/csrf-token', (req, res) => {
 
 // Ruta para migrar los usuarios
 app.use('/migracion', migracionRoutes);
+
+// Ruta de permisos
+app.use('/permisos', permisosRoutes);
+
+// Ruta de permisos usuarios
+app.use('/permisosUsuarios', permisosUsuariosRoutes);
 
 // Rutas de Auth con protección CSRF
 app.use('/auth', csrfProtection, authRoutes);
