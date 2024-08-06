@@ -7,16 +7,40 @@ dotenv.config();
 // Obtener el valor de la variable de entorno
 const useConnectionString = process.env.DB_CONNECTION_ODBC_TYPE_STRING === 'true';
 
-// Función para ejecutar consultas sin usar un pool de conexiones
+// Objeto para almacenar pools de conexiones por DSN o connectionString
+const pools = {};
+
+// Función para obtener un pool de conexiones o crearlo si no existe
+async function getPool(connectionParam) {
+  if (!pools[connectionParam]) {
+    try {
+      const connectionString = useConnectionString
+        ? connectionParam 
+        : `DSN=${connectionParam}`;
+      pools[connectionParam] = await odbc.pool({
+        connectionString: connectionString + ';CHARSET=UTF8;',
+        initialSize: 10,  // Número inicial de conexiones en el pool
+        maxSize: 100,     // Número máximo de conexiones en el pool
+        connectTimeout: 10000 // Tiempo máximo de espera para una conexión (en milisegundos)
+      });
+    } catch (error) {
+      console.error(`Error al crear el pool de conexiones para ${connectionParam}:`, error);
+      throw error;
+    }
+  }
+  return pools[connectionParam];
+}
+
+// Función para ejecutar consultas usando el pool de conexiones adecuado
 export async function executeQuery(connectionParam, query, params) {
   let connection;
   try {
-    const connectionString = useConnectionString
-      ? connectionParam
-      : `DSN=${connectionParam}`;
+    console.log(connectionParam);
+    // Obtén el pool de conexiones para el parámetro de conexión dado
+    const pool = await getPool(connectionParam);
 
-    // Conectar a la base de datos
-    connection = await odbc.connect(connectionString + ';CHARSET=UTF8;');
+    // Obtén una conexión del pool
+    connection = await pool.connect();
 
     // Ejecuta la consulta con los parámetros proporcionados
     const result = await connection.query(query, params);
@@ -26,9 +50,16 @@ export async function executeQuery(connectionParam, query, params) {
   } catch (error) {
     // Captura y maneja cualquier error que ocurra durante la ejecución de la consulta
     console.error(`Error al ejecutar la consulta ODBC - ${connectionParam}:`, error);
+
+    // Limpia el pool de conexiones para este connectionParam en caso de error grave
+    if (pools[connectionParam]) {
+      await pools[connectionParam].close();
+      delete pools[connectionParam];
+    }
+
     throw error; // Propaga el error para ser manejado por el llamador
   } finally {
-    // Cierra la conexión
+    // Devuelve la conexión al pool
     if (connection) {
       try {
         await connection.close();
