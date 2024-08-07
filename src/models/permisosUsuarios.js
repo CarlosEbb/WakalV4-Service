@@ -17,12 +17,12 @@ export default class PermisosUsuarios {
                 END;
             `;
             const insertParams = [
-                data.usuario_id,
+                data.user_id,
                 data.permisos_id
             ];
             const result = await executeQuery(process.env.DB_CONNECTION_ODBC, insertQuery, insertParams);
             console.log('Permiso Usuario creado correctamente');
-            return result[0].ID;
+            return String(result[0].ID);
         } catch (error) {
             console.error('Error al crear un nuevo Permiso Usuario:', error);
             throw error;
