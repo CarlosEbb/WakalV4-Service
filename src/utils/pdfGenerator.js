@@ -138,7 +138,7 @@ export const createPDF = async (content, config = {}) => {
     // Selecciona todas las tablas
     $('table').each((index, tableElement) => {
       const table = {
-        headerRows: 2,
+        headerRows: config.headerRows ? config.headerRows : 1,
         widths: [],
         body: [],
       };
@@ -213,7 +213,8 @@ export const createPDF = async (content, config = {}) => {
       });
   
       const maxCols = Math.max(...table.body.map(row => row.length));
-      table.widths = Array(maxCols).fill('*');
+      
+      table.widths = config.table.widths? config.table.widths: Array(maxCols).fill('*');
   
       table.body = table.body.map(row => {
         const newRow = [...row];
@@ -223,6 +224,8 @@ export const createPDF = async (content, config = {}) => {
         return newRow;
       });
   
+      console.log(table.widths);
+
       docDefinition.content.push({ table });
     });
   }else if(isCustomJSON) {

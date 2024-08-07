@@ -5,97 +5,14 @@ import { createJSONResponse } from '../utils/responseUtils.js';
 import { createExcel } from '../utils/excelGenerator.js';
 import { createPDF } from '../utils/pdfGenerator.js';
 import { createFile } from '../utils/fileGenerator.js';
+import { replaceVariablesInHtml } from '../utils/tools.js';
 
- // Datos de la tabla
- const html = `
- <table>
-    <thead>
-        <tr>
-            <td colspan="2">1. INFORMACIÓN PERSONAL</td>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-           <td>Nombre y Apellido: {{nombre}} {{apellido}}</td>
-           <td>Cédula: {{prefijo_cedula}}{{cedula}}</td>
-        </tr>
-        
-         <tr>
-            <td>Usuario: {{username}}</td>
-            <td>Departamento: {{department}}</td>
-         </tr>
-         <tr>
-            <td>Teléfono: {{cod_area}}-{{telefono}}</td>
-            <td>Cargo: {{cargo}}</td>
-         </tr>
-         <tr>
-            <td>Jurisdicción (Estado): {{jurisdiccion_estado}}</td>
-            <td>Jurisdicción (Sector): {{jurisdiccion_sector}}</td>
-         </tr>
-         <tr>
-            <td>Fecha de registro: {{created_at}}</td>
-            <td>Fecha de Expiración de usuario: {{access_expiration}}</td>
-         </tr>
-    </tbody>
-</table>
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
- `;
- const html2 = `
- <table>
-<thead>
-<tr>
-<td rowspan="2">SERIE</td>
-<td rowspan="2">CANTIDAD CTRL PRECOMPRADOS</td>
-<td rowspan="2">FECHA  DE ASIGNACION PIE PAGINA</td>
-<td rowspan="2">IDENT. NRO. </td>
-<td colspan="2">RANGOS PIE DE PAGINA</td>
-<td colspan="2">CANTIDAD CONTROL ASIGNADOS</td>
-<td rowspan="2">CANTIDAD CTRL ASIGNADOS</td>
-</tr>
-<tr>
-<tdhidden>4</tdhidden>
-<td>NRO CTRL INICIO</td>
-<td>NRO CTRL FINAL</td>
-<td>NRO CTRL INICIO</td>
-<td>NRO CTRL FINAL</td>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>G</td>
-<td>1,200</td>
-<td>3/1/2024</td>
-<td>0</td>
-<td>17,046,451</td>
-<td>17,047,650</td>
-<td>17,046,451</td>
-<td>17,046,460</td>
-<td>10</td>
-</tr>
-<tr>
-<td>F</td>
-<td>1,000</td>
-<td>3/1/2024</td>
-<td>0</td>
-<td>17,047,651</td>
-<td>17,048,650</td>
-<td>17,047,651</td>
-<td>17,047,967</td>
-<td>317</td>
-</tr>
-</tbody>
-<tfoot>
-<tr>
-<td colspan="9">TOTALES</td>
-
-</tr>
-</tfoot>
-
-</table>
-
-
-   `;
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
       
 let content = {
 columns: ['columna 1', 'columna 2', 'columna 3'],
@@ -290,6 +207,139 @@ export const getDataReporte = async (req, res) => {
       console.error('Error al obtener Reporte:', error);
       const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
       return res.status(500).json(jsonResponse);
+  }
+};
+
+export const getDataReporteImprenta = async (req, res) => {
+  try {
+    const config = {
+      titulo: 'Reporte Mensual Providencia 0032 Art.28',
+      subtitulo: '',
+      logo: "../public/img/banner_reporte.jpg",
+      pageOrientation: "Landscape",
+      table:{
+        widths: ['5%', '35%', '8%', '8%', '5%', '10%', '10%', '9%', '*']
+      }
+    };
+
+    const htmlFilePath = path.resolve(__dirname, '../views/Reports/Reporteprov0032.html');
+    const html = fs.readFileSync(htmlFilePath, 'utf8');
+
+    const plantilla = `
+      <tr>
+          <td>{{nro}}</td>
+          <td>{{contribuyente}}</td>
+          <td>{{rif}}</td>
+          <td>{{fecha_asignacion}}</td>
+          <td>{{serie}}</td>
+          <td>{{numero_control_inicial}}</td>
+          <td>{{numero_control_final}}</td>
+          <td>{{cantidad}}</td>
+          <td>{{numero_factura}}</td>
+      </tr>
+    `;
+
+    const clientes = await Cliente.getAll();
+
+    // Variable para almacenar los tiempos de respuesta
+    const tiemposDeRespuesta = [];
+    const mesConsulta = '2024-07';
+    const fechaConsulta = new Date('2024-07-01');
+
+    //faltan
+
+      
+      //cliente.id == 20 || //inter
+    
+      //cliente.id == 15 || //fibex
+      //cestatiket tiene serie pero es consecutivo
+
+
+    // Utilizamos Promise.all para ejecutar las consultas de forma concurrente
+    const resultados = await Promise.all(clientes.map(async (cliente, index) => {
+      if(cliente.date_enabled == null){
+        const consulta = new ConsultasCliente(new Cliente(cliente));
+        const inicio = Date.now(); // Tiempo de inicio de la petición
+        const { data } = await consulta.getDataBusqueda({ mes: mesConsulta }, false, true);
+        const fin = Date.now(); // Tiempo de fin de la petición
+
+        let filasHTML = '';
+        let numero_control_inicial, numero_control_final, cantidad, fecha_asignacion, serie;
+
+        // Calcular el tiempo que tomó la petición
+        const tiempoDeRespuesta = fin - inicio;
+        tiemposDeRespuesta.push(tiempoDeRespuesta);
+
+        console.log(`Tiempo de respuesta para ${cliente.nombre_cliente}: ${tiempoDeRespuesta}ms`);
+        
+        if(cliente.name_bd_custom_query_prov0032_mes != null && cliente.name_bd_column_serie_format != null){
+          // Recorrer la data por serie
+          data.forEach((item, serieIndex) => {
+            numero_control_inicial = item.numero_control_inicial;
+            numero_control_final = item.numero_control_final;
+            if(item.cantidadNumerosControl){
+              cantidad = item.cantidadNumerosControl;
+            }else{
+              cantidad = (numero_control_final - numero_control_inicial) + 1;
+            }
+            fecha_asignacion = item.fecha_asignacion;
+            serie = item.serie;
+
+            filasHTML += replaceVariablesInHtml(plantilla, {
+              nro: `${index + 1}.${serieIndex + 1}`, // Para diferenciar las filas de series
+              contribuyente: cliente.nombre_cliente,
+              rif: cliente.rif,
+              fecha_asignacion: fecha_asignacion,
+              serie: serie,
+              numero_control_inicial: numero_control_inicial,
+              numero_control_final: numero_control_final,
+              cantidad: cantidad,
+              numero_factura: ''
+            });
+          });
+        } else {
+          numero_control_inicial = data[0].numero_control;
+          numero_control_final = data[1].numero_control;
+          cantidad = numero_control_final - numero_control_inicial + 1;
+          fecha_asignacion = data[0].fecha_asignacion;
+          serie = 'N/A';
+
+          filasHTML = replaceVariablesInHtml(plantilla, {
+            nro: index + 1,
+            contribuyente: cliente.nombre_cliente,
+            rif: cliente.rif,
+            fecha_asignacion: fecha_asignacion,
+            serie: serie,
+            numero_control_inicial: numero_control_inicial,
+            numero_control_final: numero_control_final,
+            cantidad: cantidad,
+            numero_factura: ''
+          });
+        }
+
+        return filasHTML;
+      }
+    }));
+
+    // Unimos todos los contenidos generados
+    const contenido = resultados.filter(Boolean).join('');
+
+    
+    const htmlWithUserData = replaceVariablesInHtml(html, { contenido: contenido });
+    
+    const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
+    const pdfBuffer = await createPDF(htmlWithUserData, config);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+    res.end(pdfBuffer, 'binary');
+
+    // Mostrar todos los tiempos de respuesta en la consola (opcional)
+    console.log('Tiempos de respuesta:', tiemposDeRespuesta);
+  } catch (error) {
+    console.error('Error al obtener Reporte:', error);
+    const jsonResponse = createJSONResponse(500, 'Servidor', { errors: ['Error interno del servidor'] });
+    return res.status(500).json(jsonResponse);
   }
 };
 

@@ -3,7 +3,7 @@ import express from 'express';
 
 const router = express.Router();
 
-import {getTotalEmitidos, getTotalMes, getTotalEmitidosSemanal, getDataBusqueda, getDataReporte, getDataExcel, getDataPDF, generateDataPDFHTML, generateDataExcelHTML} from '../controllers/consultasClienteController.js';
+import {getTotalEmitidos, getTotalMes, getTotalEmitidosSemanal, getDataBusqueda, getDataReporte, getDataReporteImprenta, getDataExcel, getDataPDF, generateDataPDFHTML, generateDataExcelHTML} from '../controllers/consultasClienteController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import checkRolePermissions from '../middlewares/checkRolePermissions.js';
 import auditMiddleware from '../middlewares/auditMiddleware.js';
@@ -15,6 +15,7 @@ router.get('/:cliente_id/getTotalEmitidosSemanal/:year/:month', authMiddleware, 
 //router.get('/:cliente_id/getTotalCorreos', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getTotalCorreos);
 router.get('/:cliente_id/getDataBusqueda', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getDataBusqueda);
 router.post('/:cliente_id/getDataReporte', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getDataReporte);
+router.post('/:cliente_id/getDataReporteImprenta', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, getDataReporteImprenta);
 
 router.post('/:cliente_id/generateDataPDFHTML', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, generateDataPDFHTML);
 router.post('/:cliente_id/generateDataExcelHTML', authMiddleware, checkRolePermissions([1, 2, 3]), auditMiddleware, generateDataExcelHTML);

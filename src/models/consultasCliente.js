@@ -1,5 +1,6 @@
 import { executeQuery, prepareQueryforClient, addPreciosDomesa } from '../utils/dbUtils.js';
-import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes, codificar, obtenerNumeroMes } from '../utils/tools.js';
+import { obtenerFechasDelMes, obtenerNombreDelMes, obtenerSemanasDelMes, codificar, obtenerNumeroMes, replaceVariablesInHtml } from '../utils/tools.js';
+import moment from 'moment';
 
 export default class ConsultasCliente {
     constructor(cliente) {
@@ -65,12 +66,12 @@ export default class ConsultasCliente {
         return 1;
     }
 
-    async getDataBusqueda(queryParams, islimit = true) {
+    async getDataBusqueda(queryParams, islimit = true, isImprenta = false) {
         let params = [];
         let whereClause = '';
         let tabla = this.cliente.name_bd_table;
         let addSelect = '';
-        
+        let dataQuery = '';
         // Manejar coletilla si es necesario
         tabla = await this.handleColetilla(queryParams, tabla);
         
@@ -78,32 +79,47 @@ export default class ConsultasCliente {
         tabla = this.replaceMesTemplate(queryParams, tabla);
         
         let order, limit, offset;
-        if (islimit) {
-            // Inicializar variables comunes
-            ({ order, limit, offset } = this.initializePagination(queryParams));
-        }
-    
-        // Agregar filtros al whereClause y params
-        whereClause = this.addFilters(queryParams, params, whereClause);
-        
-        // Construir el select adicional
-        addSelect = this.buildAdditionalSelect(queryParams);
-    
         let totalCount = 0;
-
-        if (islimit && offset == 1) {
-            // Construir y ejecutar la consulta para el conteo
-            const countQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, true);
-            let countResult = await executeQuery(this.cliente.connections, countQuery, params);
-            totalCount = countResult[0]?.['COUNT()'] || 0;
+        
+        if(isImprenta){
+            if(this.cliente.name_bd_custom_query_prov0032_mes){
+                dataQuery = this.buildQueryImprentaProvMesColetilla(this.cliente.name_bd_custom_query_prov0032_mes, queryParams.mes); 
+            }else{
+                dataQuery = this.buildQueryImprentaProvMes(tabla, queryParams.mes); 
+            }
+        }else{
+            if (islimit) {
+                // Inicializar variables comunes
+                ({ order, limit, offset } = this.initializePagination(queryParams));
+            }
+        
+            // Agregar filtros al whereClause y params
+            whereClause = this.addFilters(queryParams, params, whereClause);
+            // Construir el select adicional
+            addSelect = this.buildAdditionalSelect(queryParams);
+        
+            
+    
+            if (islimit && offset == 1) {
+                // Construir y ejecutar la consulta para el conteo
+                const countQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, true);
+                let countResult = await executeQuery(this.cliente.connections, countQuery, params);
+                totalCount = countResult[0]?.['COUNT()'] || 0;
+            }
+            
+            // Construir y ejecutar la consulta para los datos
+            dataQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, false);
         }
-        console.log(whereClause, params);
-        // Construir y ejecutar la consulta para los datos
-        const dataQuery = this.buildQuery(tabla, whereClause, addSelect, limit, offset, order, false);
+
+
+
+        //console.log(this.cliente.connections, dataQuery, params);
         let dataResult = await executeQuery(this.cliente.connections, dataQuery, params);
     
-        if (this.cliente.id == 10) {
-            dataResult = await addPreciosDomesa(dataResult, this.cliente.connections);
+        if(!isImprenta){
+            if (this.cliente.id == 10) {
+                dataResult = await addPreciosDomesa(dataResult, this.cliente.connections);
+            }
         }
 
         return islimit ? { data: dataResult, totalCount: totalCount } : { data: dataResult };
@@ -146,6 +162,10 @@ export default class ConsultasCliente {
         if (queryParams.fecha_inicio || queryParams.fecha_final) {
             if (tabla.includes('{{Mes}}')) {
                 tabla = tabla.replace('{{Mes}}', obtenerNombreDelMes(obtenerNumeroMes(queryParams.fecha_inicio)));
+            }
+        }else if (queryParams.mes) {
+            if (tabla.includes('{{Mes}}')) {
+                tabla = tabla.replace('{{Mes}}', obtenerNombreDelMes(obtenerNumeroMes(queryParams.mes)));
             }
         }
         return tabla;
@@ -332,6 +352,63 @@ export default class ConsultasCliente {
     
         return { query_coletilla, params_coletilla };
     }
+
+    buildQueryImprentaProvMes(tabla, mes) {
+        // Crear un objeto moment para el primer día del mes
+        const firstDay = moment(mes + '-01');
+        // Crear un objeto moment para el último día del mes
+        const lastDay = firstDay.clone().endOf('month');
+    
+        // Formatear las fechas a 'YYYY-MM-DD'
+        const firstDayFormatted = firstDay.format('YYYY-MM-DD');
+        const lastDayFormatted = lastDay.format('YYYY-MM-DD');
+
+        // Parte común de la consulta
+        const commonQuery = `
+            SELECT
+                TOP 1 ${this.cliente.name_bd_column_numero_control} as numero_control,
+                ${this.cliente.name_bd_column_fecha_emision} as fecha_emision,
+                ${this.cliente.name_bd_column_fecha_asignacion} as fecha_asignacion
+            FROM
+                ${tabla}
+            WHERE
+                fecha_asignacion BETWEEN '${firstDayFormatted}'
+                AND '${lastDayFormatted}'
+            ORDER BY
+                numero_control
+        `;
+    
+        // Concatenar las partes específicas
+        return `
+        (
+            ${commonQuery} ASC
+        )
+        UNION
+        (
+            ${commonQuery} DESC
+        )
+        `;
+    }
+
+    buildQueryImprentaProvMesColetilla(tabla, mes) {
+        // Crear un objeto moment para el primer día del mes
+        const firstDay = moment(mes + '-01');
+        // Crear un objeto moment para el último día del mes
+        const lastDay = firstDay.clone().endOf('month');
+    
+        // Formatear las fechas a 'YYYY-MM-DD'
+        const firstDayFormatted = firstDay.format('YYYY-MM-DD');
+        const lastDayFormatted = lastDay.format('YYYY-MM-DD');
+
+        // Parte común de la consulta
+        let commonQuery = replaceVariablesInHtml(tabla, { fecha_ini_remplace: firstDayFormatted, fecha_fin_remplace: lastDayFormatted })
+        console.log(commonQuery);
+        // Concatenar las partes específicas
+        return commonQuery;
+    }
+
+    
+    
 
     //funciones para filtrar
 

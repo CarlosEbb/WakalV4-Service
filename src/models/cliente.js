@@ -18,7 +18,9 @@ export default class Cliente {
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
         this.enabled = data.enabled || null;
+        this.date_enabled = data.date_enabled || null;
 
+    
         this.url_prod = data.url_prod || null;
         this.url_qa = data.url_qa || null;
 
@@ -32,6 +34,8 @@ export default class Cliente {
         this.encrypt_url_format_order = data.encrypt_url_format_order || null;
 
         this.name_bd_table = data.name_bd_table || null;
+        this.name_bd_custom_query_prov0032_mes = data.name_bd_custom_query_prov0032_mes || null;
+
         this.name_bd_table_coletilla = data.name_bd_table_coletilla || null;
 
         this.name_bd_column_numero_control = data.name_bd_column_numero_control || null;

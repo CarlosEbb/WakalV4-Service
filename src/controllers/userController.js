@@ -76,7 +76,7 @@ export const getUserByIdReporte = async (req, res) => {
 
             const filename = config.titulo ? config.titulo.replace(/\s+/g, '_') : 'reporte';
             const pdfBuffer = await createPDF(htmlWithUserData, config);
-console.log(req.body.email);
+            console.log(req.body.email);
             if(req.body.email){
                 // Configurar adjuntos
                 const attachments = [{
