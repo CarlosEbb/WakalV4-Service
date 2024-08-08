@@ -107,6 +107,16 @@ app.get('/csrf-token', (req, res) => {
     res.json({ csrfToken });
 });
 
+
+app.get('/pruebaGet', (req, res) => {
+    const respuesta = "respuesta de servicio GET exitosa.";
+    res.json({ respuesta });
+});
+app.post('/pruebaPost', (req, res) => {
+    const respuesta = "respuesta de servicio POST exitosa." + req.body.valor;
+    res.json({ respuesta });
+});
+
 // Ruta para migrar los usuarios
 app.use('/migracion', migracionRoutes);
 
