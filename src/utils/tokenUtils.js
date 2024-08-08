@@ -24,7 +24,7 @@ export async function generateResetToken(userId) {
 }
 
 export async function generateAuthToken(user) {
-    let time = '24m';
+    let time = '24h';
     if(process.env.APP_URL.includes('localhost')){
         time = '24h';
     }
