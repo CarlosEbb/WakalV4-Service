@@ -17,7 +17,7 @@ const upload = multer({ dest: './uploads/logo_clientes/' });
 router.get('/with-connection-status', authMiddleware, checkRolePermissions([1]), auditMiddleware, getAllClientesWithConnectionStatus);
 
 // Ruta para obtener todos los clientes
-router.get('/', getAllClientes);
+router.get('/', authMiddleware, checkRolePermissions([1, 2]), auditMiddleware, getAllClientes);
 
 // Ruta para crear un nuevo cliente
 router.post('/', authMiddleware, checkRolePermissions([1]), upload.single('logo'), auditMiddleware, createCliente);

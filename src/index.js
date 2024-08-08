@@ -129,7 +129,7 @@ app.use('/roles', csrfProtection, rolRoutes);
 app.use('/auditorias', csrfProtection, auditoriasRoutes);
 
 // Rutas de clientes
-app.use('/clientes', clienteRoutes);
+app.use('/clientes', csrfProtection, clienteRoutes);
 
 // Rutas para consultas
 app.use('/consultas', consultaRoutes);
